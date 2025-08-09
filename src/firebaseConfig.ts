@@ -1,11 +1,10 @@
 const firebaseConfig = {
-  apiKey: "AIzaSyDyEb3mm0xPQRVFp7XpYgO_L0rMZ8brfGk",
-  authDomain: "sharma-billing.firebaseapp.com",
-  projectId: "sharma-billing",
-  storageBucket: "sharma-billing.firebasestorage.app",
-  messagingSenderId: "61003447088",
-  appId: "1:61003447088:web:15521fe430c7b7da6566f5",
-  measurementId: "G-4LMX76882Y",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 export default firebaseConfig;
