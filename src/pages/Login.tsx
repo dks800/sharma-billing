@@ -19,11 +19,26 @@ export default function Login() {
     return <Loader />;
   }
 
+  const handleLogin = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      if (error.code === "auth/unauthorized-domain") {
+        alert(
+          "Login failed: This domain is not authorized. Please contact support or check Firebase settings."
+        );
+      } else {
+        alert("Login failed: " + error.message);
+      }
+      console.error("Firebase Auth Error:", error);
+    }
+  };
+
   return (
     <div className="flex justify-center items-center min-h-screen">
       <button
         className="bg-blue-600 text-white px-6 py-3 rounded"
-        onClick={() => signInWithGoogle()}
+        onClick={handleLogin}
       >
         Sign in with Google
       </button>
