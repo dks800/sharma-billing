@@ -1,12 +1,14 @@
 import { useState, useMemo } from "react";
 import AddCompanyForm from "../components/companies/AddCompanyForm";
-import { FiPlus, FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiPlus, FiEdit2, FiTrash2, FiDownload } from "react-icons/fi";
 import Modal from "../components/common/Modal";
 import { useCompanies } from "../hooks/useCompanies";
 import { db } from "../firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import Loader from "../components/Loader";
-import CompanyTablePrint from "../components/companies/CompanyTablePrint";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import CompanyListPDF from "../components/companies/CompanyListPDF";
+import { toast } from "react-toastify";
 
 export interface BankAccount {
   bankName: string;
@@ -102,10 +104,9 @@ export default function CompanyList() {
       </button>
     </div>
   );
-  console.log("paginated --->", paginated);
+
   return (
     <div className="space-y-6">
-      {/* Top Controls */}
       <div className="flex flex-col sm:flex-row sm:justify-between gap-3 sm:items-center">
         <button
           onClick={() => {
@@ -123,9 +124,28 @@ export default function CompanyList() {
           onChange={(e) => setSearch(e.target.value)}
           className="border p-2 rounded w-full sm:w-64"
         />
+        <PDFDownloadLink
+          document={<CompanyListPDF companies={companies} />}
+          fileName="company_list.pdf"
+        >
+          {({ loading }) => (
+            <button
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
+              onClick={() => {
+                if (!loading) {
+                  toast.success("✅ PDF download started!");
+                  console.log("PDF generation started");
+                }
+              }}
+            >
+              <FiDownload className="text-lg" />
+              {loading ? "Generating PDF..." : "Export List"}
+            </button>
+          )}
+        </PDFDownloadLink>
+
       </div>
 
-      {/* Modals */}
       {showFormModal && (
         <Modal
           isOpen={showFormModal}
@@ -189,12 +209,9 @@ export default function CompanyList() {
         ) : filtered.length === 0 ? (
           <p className="text-gray-500">No companies found</p>
         ) : (
-          <>
+          <div>
             {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto">
-              <div className="mb-4 flex justify-end">
-                {/* <CompanyTablePrint companies={filteredCompanies} /> */}
-              </div>
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="bg-gray-100 text-left">
@@ -312,28 +329,30 @@ export default function CompanyList() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
 
-            {/* Pagination */}
-            <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-3">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => p - 1)}
-                className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span>
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => p + 1)}
-                className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          </>
+        {/* Pagination */}
+        {filtered.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-3">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
         )}
       </div>
     </div>

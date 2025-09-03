@@ -3,7 +3,6 @@ import { auth, signInWithGoogle, logout } from "./firebase";
 
 function App() {
   const [user, setUser] = useState<any>(null);
-  console.log("user --->", user);
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setUser(user);
