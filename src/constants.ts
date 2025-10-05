@@ -19,3 +19,19 @@ export const UNIT_OPTIONS = [
   "set",
   "nos",
 ];
+
+export const ROUTES = {
+  LOGIN: "/login",
+  DASHBOARD: "/",
+  SELECTCOMPANYSALES: "/select-company-sales",
+  SALES: "/sales",
+  PURCHASE: "/purchase",
+  CUSTOMERS: "/customers",
+  COMPANIES: "/companies",
+  ADDSALES: "/add-sales",
+  EDITSALES: "/edit-sales",
+  ADDPURCHASE: "/add-purchase",
+  EDITPURCHASE: "/edit-purchase",
+  ADDCUSTOMER: "/add-customer",
+  EDITCUSTOMER: "/edit-customer",
+}

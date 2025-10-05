@@ -1,11 +1,14 @@
 import { useState, useMemo } from "react";
 import AddCustomerForm from "../components/customer/AddCustomerForm";
 import { useClients } from "../hooks/useClients";
-import { FiPlus, FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiPlus, FiEdit2, FiTrash2, FiDownload } from "react-icons/fi";
 import Modal from "../components/common/Modal";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import Loader from "../components/Loader";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import CustomerListPDF from "../components/customer/CustomerListPDF";
+import { toast } from "react-toastify";
 
 export default function CustomerListPage() {
   const PAGE_SIZE = 10;
@@ -126,6 +129,25 @@ export default function CustomerListPage() {
         >
           <FiPlus /> Add Client
         </button>
+
+        <PDFDownloadLink
+          document={<CustomerListPDF clients={clients} />}
+          fileName="client_list.pdf"
+        >
+          {({ loading }) => (
+            <button
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
+              onClick={() => {
+                if (!loading) {
+                  toast.success("✅ PDF download started!");
+                }
+              }}
+            >
+              <FiDownload className="text-lg" />
+              {loading ? "Generating PDF..." : "Export"}
+            </button>
+          )}
+        </PDFDownloadLink>
       </div>
 
       {/* Add/Edit Modal */}

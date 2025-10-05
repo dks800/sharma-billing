@@ -74,23 +74,22 @@ export function numberToWords(num: number): string {
   return words + " Only";
 }
 
-// utils/formatCurrency.ts
-export function formatCurrency(amount: string | number): string {
+export function formatCurrency(amount: string | number, showCurrency = false): string {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
 
-  if (isNaN(num)) return "₹0.00";
+  if (isNaN(num)) return `${showCurrency ? "Rs. " : ""}0.00`;
 
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(num);
+  }).format(num)?.replace("₹", showCurrency ? "Rs. " : "");
 }
 
 export function formatDate(dateStr: string | Date): string {
+  if (!dateStr) return "";
   const date = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
-
   if (isNaN(date.getTime())) return "";
 
   return date.toLocaleDateString("en-GB", {
@@ -99,3 +98,9 @@ export function formatDate(dateStr: string | Date): string {
     year: "numeric",
   });
 }
+
+export const formatFinYear = (input: string) => {
+  if (!input) return "";
+  return input?.replace(/(\d{2})(\d{2})\D+(\d{2})(\d{2})/, "$2-$4");
+};
+

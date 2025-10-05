@@ -134,12 +134,11 @@ export default function CompanyList() {
               onClick={() => {
                 if (!loading) {
                   toast.success("✅ PDF download started!");
-                  console.log("PDF generation started");
                 }
               }}
             >
               <FiDownload className="text-lg" />
-              {loading ? "Generating PDF..." : "Export List"}
+              {loading ? "Generating PDF..." : "Export"}
             </button>
           )}
         </PDFDownloadLink>

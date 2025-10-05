@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useCompanies } from "../../hooks/useCompanies";
 import Loader from "../Loader";
+import { ROUTES } from "../../constants";
 
 export default function CompanySelectorPage({
   redirectTo,
@@ -13,12 +14,12 @@ export default function CompanySelectorPage({
 
   const { data: companies, loading, error } = useCompanies();
 
-  const handleSelect = (gstin, name) => {
+  const handleSelect = (gstin: string, name: string) => {
     navigate(`/${redirectTo}`, { state: { companyId: gstin, companyName: name } });
   };
 
   const handleClose = () => {
-    navigate("/"); // back to dashboard
+    navigate(ROUTES?.DASHBOARD);
   };
 
   return (

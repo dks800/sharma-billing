@@ -5,6 +5,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "./firebase";
 import { FiHome, FiBriefcase, FiFileText, FiMenu, FiX } from "react-icons/fi";
 import { BsFilePerson } from "react-icons/bs";
+import { ROUTES } from "./constants";
 
 export default function Layout() {
   const [loading, setLoading] = useState(false);
@@ -16,7 +17,7 @@ export default function Layout() {
     setLoading(true);
     await signOut(auth);
     setLoading(false);
-    navigate("/login");
+    navigate(ROUTES?.LOGIN);
   };
 
   // Breadcrumb logic

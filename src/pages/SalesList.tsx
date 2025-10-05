@@ -2,11 +2,17 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSalesBill } from "../hooks/useInvoices";
 import Loader from "../components/Loader";
-import { FiPlus } from "react-icons/fi";
-import { formatCurrency, formatDate } from "../utils/commonUtils";
+import { FiDownload, FiPrinter } from "react-icons/fi";
+import { formatCurrency, formatDate, formatFinYear } from "../utils/commonUtils";
 import renderPaymentStatus from "../components/invoices/getPaymentStatus";
 import Modal from "../components/common/Modal";
 import DeleteSalesBillModal from "../components/invoices/DeleteSalesBillModal";
+import { ROUTES } from "../constants";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import SalesListPDF from "../components/invoices/SalesListPDF";
+import { toast } from "react-toastify";
+import SingleBillPDF from "../components/invoices/SingleBillPDF";
+import { BsFillPlusCircleFill } from "react-icons/bs";
 
 export default function SalesList() {
   const navigate = useNavigate();
@@ -14,10 +20,9 @@ export default function SalesList() {
   const companyId = location.state?.companyId;
   const companyName = location.state?.companyName;
 
-  // Redirect if no company selected
   useEffect(() => {
-    if (!companyId) {
-      navigate("/select-company-sales");
+    if (!companyId || !companyName) {
+      navigate(ROUTES?.SELECTCOMPANYSALES);
     }
   }, [companyId, navigate]);
 
@@ -25,7 +30,8 @@ export default function SalesList() {
   const [orderByField, setOrderByField] = useState("billNumber");
   const [orderDirection, setOrderDirection] = useState<"asc" | "desc">("desc");
   const [limit, setLimit] = useState(50); // fetching bigger chunk, paginate client-side
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
   const {
     data: sales,
     loading,
@@ -67,10 +73,6 @@ export default function SalesList() {
     }
   };
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 10;
-
   const paginatedSales = useMemo(() => {
     const start = (currentPage - 1) * rowsPerPage;
     return filteredSales.slice(start, start + rowsPerPage);
@@ -89,6 +91,7 @@ export default function SalesList() {
   };
 
   const getTaxType = () => {
+    if (selectedBill?.taxType === "NA") return "(NA)";
     if (selectedBill?.taxType !== "18") {
       return `(${selectedBill?.taxType} + ${selectedBill?.taxType})%`;
     }
@@ -119,35 +122,75 @@ export default function SalesList() {
     );
   };
 
-  console.log("selectedBill -->", selectedBill);
+  const renderSingleBillPrint = (bill: any) => {
+    console.log("bill -->>", bill?.items)
+    return (
+      <PDFDownloadLink
+        document={<SingleBillPDF bill={bill} />}
+        fileName={`sales_${bill?.billNumber}_${formatFinYear(bill?.financialYear)}.pdf`}
+        className="flex items-center gap-1 text-gray-700 hover:underline"
+        onClick={(e) => {
+          e.stopPropagation();
+          toast.success("✅ PDF download started!")
+        }}
+      >
+        {({ loading }) => {
+          return (
+            <>
+              <FiPrinter className="text-sm" />
+              {loading ? "Loading..." : "Print"}
+            </>
+          );
+        }}
+      </PDFDownloadLink>
+    );
+  };
 
   return (
     <div className="p-4">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
         <h1 className="text-xl font-bold">Sales Bills - {companyName}</h1>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <div className="flex gap-2 w-full sm:w-auto justify-between">
+          <PDFDownloadLink
+            document={<SalesListPDF billList={sales} />}
+            fileName="sales_list.pdf"
+          >
+            {({ loading }) => (
+              <button
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
+                onClick={() => {
+                  if (!loading) {
+                    toast.success("✅ PDF download started!");
+                  }
+                }}
+              >
+                <FiDownload className="text-lg" />
+                {loading ? "Loading..." : "Export List"}
+              </button>
+            )}
+          </PDFDownloadLink>
           <button
             className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center gap-2"
             onClick={() =>
-              navigate("/add-sales", { state: { companyId, companyName } })
+              navigate(ROUTES?.ADDSALES, { state: { companyId, companyName } })
             }
           >
-            <FiPlus /> Add Sales Bill
+            <BsFillPlusCircleFill /> Sales Bill
           </button>
+          </div>
           <input
             type="text"
             placeholder="Search invoice, customer, amount, items..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
-              setCurrentPage(1); // reset to first page on new search
+              setCurrentPage(1);
             }}
             className="border rounded p-2 w-full sm:w-64"
           />
         </div>
       </div>
-
       {loading ? (
         <Loader />
       ) : error ? (
@@ -216,8 +259,8 @@ export default function SalesList() {
                         className="text-blue-500 hover:underline"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate("/edit-sales-bill", {
-                            state: { bill, companyId },
+                          navigate(ROUTES?.EDITSALES, {
+                            state: { bill, companyId, companyName },
                           });
                         }}
                       >
@@ -235,12 +278,6 @@ export default function SalesList() {
                       >
                         Delete
                       </button>
-                      <button
-                        className="text-gray-700 hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Print {/* placeholder */}
-                      </button>
                     </td>
                   </tr>
                 ))}
@@ -255,7 +292,7 @@ export default function SalesList() {
                 key={bill.id}
                 className="bg-white rounded shadow p-3 cursor-pointer"
                 onClick={() => {
-                  setShowDetailModal(true);
+                  setShowDetailsModal(true);
                   setSelectedBill(bill);
                 }}
               >
@@ -303,105 +340,161 @@ export default function SalesList() {
       )}
 
       {/* Modal (shared for desktop + mobile) */}
+      {showDetailsModal && selectedBill && <Modal
+        title={`Bill #${selectedBill.billNumber} - ${companyName} (${getFinancialYear(
+          selectedBill.billDate
+        )})`}
+        type="info"
+        isOpen={showDetailsModal && selectedBill}
+        onClose={() => setSelectedBill(null)}
+        footer={
+          <div className="flex justify-between w-full">
+            <div className="flex gap-2">
+              <button
+                className="px-4 py-2 rounded border border-blue-500 text-blue-600 hover:bg-blue-50"
+                onClick={() => {
+                  console.log("selectedBill -->>", selectedBill);
+                  navigate(ROUTES?.EDITSALES, {
+                    state: { bill: selectedBill, companyId, companyName },
+                  });
+                  setSelectedBill(null);
+                }}
+              >
+                Edit
+              </button>
+              <button
+                className="px-4 py-2 rounded border border-red-500 text-red-600 hover:bg-red-50"
+                onClick={() => setConfirmDelete(true)}
+              >
+                Delete
+              </button>
+              {renderSingleBillPrint(selectedBill)}
+            </div>
 
-      {showDetailsModal && selectedBill && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-40 transition-opacity duration-300"
-            onClick={() => setSelectedBill(null)}
-          />
+            <div>
+              <button
+                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700"
+                onClick={() => setSelectedBill(null)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        }
+      >
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+          <p>
+            <span className="font-medium">Date:</span>{" "}
+            {formatDate(selectedBill.billDate)}
+          </p>
+          <p>
+            <span className="font-medium">Customer:</span>{" "}
+            {selectedBill.customerName}
+          </p>
+          <p>
+            <span className="font-medium">GSTIN:</span>{" "}
+            {selectedBill.customerGSTIN || "-"}
+          </p>
+          <p>
+            <span className="font-medium">Phone:</span>{" "}
+            {selectedBill.customerPhone || "-"}
+          </p>
+          <p>
+            <span className="font-medium">Status:</span>{" "}
+            {renderPaymentStatus(selectedBill.paymentStatus)}
+          </p>
+          <p className="sm:col-span-2">
+            <span className="font-medium">Comments:</span>{" "}
+            {selectedBill.comments || "-"}
+          </p>
 
-          <div className="fixed inset-0 flex items-center justify-center z-50 p-4 rounded-2xl">
-            <div
-              className="bg-white rounded-lg shadow-lg p-4 w-11/12 max-w-md sm:max-w-2xl transform transition-all duration-300 ease-out scale-95 opacity-0 animate-fadeInScale"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <h2 className="text-lg font-bold mb-4">
-                Bill #{selectedBill.billNumber} - {companyName} - (
-                {getFinancialYear(selectedBill.billDate)})
-              </h2>
-
-              {/* Content Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                <p>
-                  <span className="font-medium">Date:</span>{" "}
-                  {formatDate(selectedBill.billDate)}
-                </p>
-                <p>
-                  <span className="font-medium">Customer:</span>{" "}
-                  {selectedBill.customerName}
-                </p>
-                <p>
-                  <span className="font-medium">GSTIN:</span>{" "}
-                  {selectedBill.customerGSTIN || "-"}
-                </p>
-                <p>
-                  <span className="font-medium">Phone:</span>{" "}
-                  {selectedBill.customerPhone || "-"}
-                </p>
-                <p>
-                  <span className="font-medium">Status:</span>{" "}
-                  {renderPaymentStatus(selectedBill.paymentStatus)}
-                </p>
-                <p className="sm:col-span-2">
-                  <span className="font-medium">Comments:</span>{" "}
-                  {selectedBill.comments || "-"}
-                </p>
-                <div className="sm:col-span-2 bg-gray-50 rounded-lg mt-2 shadow-sm">
-                  <h3 className="text-base font-semibold mb-2">Bill Summary</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="font-medium">Sub Total:</span>
-                      <span>{formatCurrency(selectedBill.totalBeforeTax)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Tax {getTaxType()}:</span>
-                      <span>{formatCurrency(selectedBill.totalGST)}</span>
-                    </div>
-                    <div className="flex justify-between border-t pt-2 bg-green-50 rounded text-green-800 font-semibold">
-                      <span>Grand Total:</span>
-                      <span>{formatCurrency(selectedBill.totalAmount)}</span>
-                    </div>
-                  </div>
-                </div>
+          {/* Bill Summary */}
+          <div className="sm:col-span-2 bg-gray-50 rounded-lg mt-2 shadow-sm">
+            <h3 className="text-base font-semibold mb-2">Bill Summary</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="font-medium">Sub Total:</span>
+                <span>{formatCurrency(selectedBill.totalBeforeTax)}</span>
               </div>
-
-              {/* Footer Buttons */}
-              <div className="grid grid-cols-2 sm:flex sm:justify-end gap-3 mt-6">
-                <button
-                  className="px-4 py-2 rounded border border-blue-500 text-blue-600 hover:bg-blue-50"
-                  onClick={() => {
-                    navigate("/edit-sales-bill", {
-                      state: { bill: selectedBill, companyId },
-                    });
-                    setSelectedBill(null);
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  className="px-4 py-2 rounded border border-red-500 text-red-600 hover:bg-red-50"
-                  onClick={() => {
-                    setConfirmDelete(true);
-                  }}
-                >
-                  Delete
-                </button>
-                <button className="px-4 py-2 rounded border border-gray-500 text-gray-700 hover:bg-gray-100">
-                  Print
-                </button>
-                <button
-                  className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700"
-                  onClick={() => setSelectedBill(null)}
-                >
-                  Close
-                </button>
+              <div className="flex justify-between">
+                <span className="font-medium">Tax {getTaxType()}:</span>
+                <span>{formatCurrency(selectedBill.totalGST)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Round Up:</span>
+                <span>{formatCurrency(selectedBill.roundUp)}</span>
+              </div>
+              <div className="flex justify-between border-t py-2 bg-green-50 rounded text-green-800 font-semibold">
+                <span>Grand Total:</span>
+                <span>{formatCurrency(selectedBill.totalAmount)}</span>
               </div>
             </div>
           </div>
-        </>
-      )}
+        </div>
+
+        {/* Items Section */}
+        <div className="mt-4">
+          <h3 className="text-base font-semibold mb-2">Items</h3>
+
+          {/* Desktop Table */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="min-w-full border border-gray-200 text-sm">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="border px-3 py-2 text-left">#</th>
+                  <th className="border px-3 py-2 text-left">Description</th>
+                  <th className="border px-3 py-2 text-right">Qty</th>
+                  <th className="border px-3 py-2 text-right">Rate</th>
+                  <th className="border px-3 py-2 text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedBill.items?.map((item: any, idx: number) => (
+                  <tr key={idx}>
+                    <td className="border px-3 py-2">{idx + 1}</td>
+                    <td className="border px-3 py-2">{item.description}</td>
+                    <td className="border px-3 py-2 text-right">{item.qty}</td>
+                    <td className="border px-3 py-2 text-right">
+                      {formatCurrency(item.rate)}
+                    </td>
+                    <td className="border px-3 py-2 text-right">
+                      {formatCurrency(item.total)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Accordion */}
+          <div className="sm:hidden space-y-2">
+            {selectedBill.items?.filter((i: any) => i?.description)?.map((item: any, idx: number) => (
+              <details
+                key={idx}
+                className="border rounded-lg p-3 shadow-sm bg-white"
+              >
+                <summary className="font-medium cursor-pointer">
+                  {idx + 1}. {item.description}
+                </summary>
+                <div className="mt-2 text-sm space-y-1">
+                  <p>
+                    <span className="font-medium">Qty:</span> {item.qty}
+                  </p>
+                  <p>
+                    <span className="font-medium">Rate:</span>{" "}
+                    {formatCurrency(item.rate)}
+                  </p>
+                  <p>
+                    <span className="font-medium">Total:</span>{" "}
+                    {formatCurrency(item.qty * item.rate)}
+                  </p>
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+      </Modal>}
 
       {confirmDelete && (
         <DeleteSalesBillModal

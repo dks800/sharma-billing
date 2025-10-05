@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { auth, signInWithGoogle } from "../firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import Loader from "../components/Loader";
+import { ROUTES } from "../constants";
 
 export default function Login() {
   const [user, loading] = useAuthState(auth);
@@ -11,7 +12,7 @@ export default function Login() {
   useEffect(() => {
     if (!loading && user) {
       // User is logged in, redirect to dashboard
-      navigate("/", { replace: true });
+      navigate(ROUTES?.DASHBOARD, { replace: true });
     }
   }, [user, loading, navigate]);
 

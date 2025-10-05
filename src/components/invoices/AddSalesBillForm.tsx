@@ -6,6 +6,9 @@ import { getNextBillNumber, getFinancialYear } from "../../utils/billingHelper";
 import CustomerDropdown, { Client } from "../customer/CustomerDropdown";
 import { formatCurrency, numberToWords } from "../../utils/commonUtils";
 import Modal from "../common/Modal";
+import { ROUTES } from "../../constants";
+import { FiTrash2 } from "react-icons/fi";
+import { BsFillPlusCircleFill } from "react-icons/bs";
 
 interface Item {
   description: string;
@@ -34,6 +37,11 @@ export default function AddSalesBillForm() {
 
   const [billNumber, setBillNumber] = useState<string>("");
   const [autoBillNumber, setAutoBillNumber] = useState("");
+  const [locationFrom, setLocationFrom] = useState("");
+  const [locationTo, setLocationTo] = useState("");
+  const [ewayBillNo, setEwayBillNo] = useState("");
+  const [dispatchBy, setDispatchBy] = useState("");
+  const [ewayBillDateTime, setEwayBillDateTime] = useState("");
   const [modalAttr, setModalAttr] = useState<ModalAttrType>({
     title: "",
     type: "",
@@ -72,7 +80,7 @@ export default function AddSalesBillForm() {
 
   useEffect(() => {
     if (!companyId) {
-      navigate("/select-company-sales");
+      navigate(ROUTES?.SELECTCOMPANYSALES);
       return;
     }
 
@@ -90,9 +98,14 @@ export default function AddSalesBillForm() {
   const handleAddItem = () => {
     setItems([
       ...items,
-      { description: "", hsnCode: "", qty: 1, unit: "pcs", rate: 0 },
+      { description: "", hsnCode: "", qty: 1, unit: "", rate: 0 },
     ]);
   };
+
+  const handleRemoveItem = (index: number) => {
+    const updated: any = [...items]?.filter((_, idx) => idx !== index);
+    setItems(updated);
+  }
 
   const handleItemChange = (index: number, field: keyof Item, value: any) => {
     const updated: any = [...items];
@@ -120,30 +133,28 @@ export default function AddSalesBillForm() {
     return {
       totalBeforeTax,
       totalGST,
-      totalAmount: totalBeforeTax + totalGST,
+      roundUp: Math.ceil(totalBeforeTax + totalGST) - (totalBeforeTax + totalGST),
+      totalAmount: Math.ceil(totalBeforeTax + totalGST),
     };
   };
 
   const handleSave = async () => {
-    if (!companyId) return alert("Select a company first!");
-    if (!selectedCustomer?.gstin) return alert("Customer is required!");
-    if (!addSalesBill) return alert("Hook not ready. Reload App!");
-
+    let errorMsg = "";
+    if (!companyId) errorMsg = "Select a company first!";
+    if (!selectedCustomer?.gstin) errorMsg = "Customer Missing. Please select a customer";
+    if (!addSalesBill) errorMsg = "Hook not ready. Reload App!";
     const totals = calculateTotals();
-
-    const duplicateBill = existingBills.find(
-      (b: any) => b.billNumber === billNumber
-    );
-    if (duplicateBill) {
-      // return alert("Invoice number already exists!");
+    const duplicateBill = existingBills.find((b: any) => b.billNumber === billNumber);
+    if (duplicateBill) errorMsg = "Invoice number already exists!";
+    errorMsg = totals.totalAmount === 0 ? "Total amount cannot be zero!" : errorMsg;
+    if (errorMsg && errorMsg?.length > 0) {
       setShowConfirm(true);
-      setModalAttr({
+      return setModalAttr({
         title: "Error!",
-        content: "Invoice number already exists!",
+        content: errorMsg,
         type: "error",
         footer: renderCancelButtonForModal(),
       });
-      return;
     }
 
     const duplicateClientAmount = existingBills.find(
@@ -169,7 +180,7 @@ export default function AddSalesBillForm() {
       setModalAttr({
         title: "Warning!",
         content:
-          "You have changed the auto-generated Bill Number. Do you want to continue?",
+          `You have changed the auto-generated Bill Number from ${autoBillNumber} to ${billNumber}. Do you want to continue?`,
         type: "warning",
         footer: getBillNumberChangeWarningFooter(),
       });
@@ -179,6 +190,8 @@ export default function AddSalesBillForm() {
 
     setLoading(true);
     await addSalesBill({
+      companyId,
+      companyName,
       billNumber,
       billDate,
       financialYear: getFinancialYear(new Date(billDate)),
@@ -187,15 +200,21 @@ export default function AddSalesBillForm() {
       items,
       totalBeforeTax: totals.totalBeforeTax,
       totalGST: totals.totalGST,
+      roundUp: totals.roundUp,
       totalAmount: totals.totalAmount,
       paymentStatus,
       comments,
       taxType,
+      locationFrom,
+      locationTo,
+      ewayBillNo,
+      dispatchBy,
+      ewayBillDateTime,
       createdAt: new Date(),
     });
 
     setLoading(false);
-    navigate("/sales", { state: { companyId } });
+    navigate(ROUTES?.SALES, { state: { companyId, companyName } });
   };
 
   const clearForm = () => {
@@ -210,11 +229,12 @@ export default function AddSalesBillForm() {
   const totals = calculateTotals();
 
   const getGstPercent = () => {
-    if (Object.keys(selectedCustomer).length < 1) return "";
-    if (selectedCustomer?.taxType !== "18") {
-      return `(${selectedCustomer?.taxType} + ${selectedCustomer?.taxType})%`;
+    if (!taxType) return "";
+    if (taxType === "NA") return "(NA)";
+    if (taxType !== "18") {
+      return `(${taxType} + ${taxType})%`;
     }
-    return `(${selectedCustomer?.taxType})%`;
+    return taxType + "%";
   };
 
   const handleModalClose = () => {
@@ -257,7 +277,7 @@ export default function AddSalesBillForm() {
         <h1 className="text-2xl font-bold">{companyName}</h1>
         <button
           className="text-blue-600 underline"
-          onClick={() => navigate("/select-company-sales")}
+          onClick={() => navigate(ROUTES?.SELECTCOMPANYSALES)}
         >
           Change Company
         </button>
@@ -327,6 +347,64 @@ export default function AddSalesBillForm() {
             <option value="Partially Paid">Partially Paid</option>
           </select>
         </div>
+        <div>
+          <label className="block font-medium mb-1">Tax Type</label>
+          <select
+            value={taxType}
+            onChange={(e) => setTaxType(e.target.value as any)}
+            className="w-full border rounded p-2"
+          >
+            <option value="2.5">2.5%</option>
+            <option value="9">9% + 9%</option>
+            <option value="18">18%</option>
+            <option value="NA">NA</option>
+          </select>
+        </div>
+        <div>
+          <label className="block font-medium mb-1">From Location</label>
+          <input
+            type="input"
+            value={locationFrom}
+            onChange={(e) => setLocationFrom(e.target.value)}
+            className="w-full border rounded p-2"
+          />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">To Location</label>
+          <input
+            type="input"
+            value={locationTo}
+            onChange={(e) => setLocationTo(e.target.value)}
+            className="w-full border rounded p-2"
+          />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">Dispatch By</label>
+          <input
+            type="input"
+            value={dispatchBy}
+            onChange={(e) => setDispatchBy(e.target.value)}
+            className="w-full border rounded p-2"
+          />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">Eway Bill No.</label>
+          <input
+            type="input"
+            value={ewayBillNo}
+            onChange={(e) => setEwayBillNo(e.target.value)}
+            className="w-full border rounded p-2"
+          />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">Eway Bill Date & Time</label>
+          <input
+            type="input"
+            value={ewayBillDateTime}
+            onChange={(e) => setEwayBillDateTime(e.target.value)}
+            className="w-full border rounded p-2"
+          />
+        </div>
       </div>
 
       {/* Customer */}
@@ -338,15 +416,17 @@ export default function AddSalesBillForm() {
             value={selectedCustomer}
             onChange={(c) => {
               setSelectedCustomer(c);
-              setTaxType(c.taxType || "exclusive");
+              setTaxType(c.taxType || "NA");
             }}
           />
         </div>
         <button
           className="bg-green-500 text-white px-3 py-2 rounded"
-          onClick={() => navigate("/customers")}
+          onClick={() => navigate(ROUTES?.CUSTOMERS)}
         >
-          + New Customer
+          <div className="flex flex-row items-center gap-1">
+            <BsFillPlusCircleFill /> Customer
+          </div>
         </button>
       </div>
 
@@ -364,6 +444,7 @@ export default function AddSalesBillForm() {
                 <th className="px-2 py-1 border w-[80px]">Unit</th>
                 <th className="px-2 py-1 border w-[150px]">Rate</th>
                 <th className="px-2 py-1 border w-[150px]">Amount</th>
+                <th className="px-2 py-1 border w-[150px]"></th>
               </tr>
             </thead>
             <tbody>
@@ -425,6 +506,9 @@ export default function AddSalesBillForm() {
                   <td className="px-2 py-1 border text-right">
                     {formatCurrency((item.qty * item.rate).toFixed(2))}
                   </td>
+                  <td className="px-2 py-1 border text-center cursor-pointer text-red-600 hover:text-red-800">
+                    {idx !== 0 && <FiTrash2 title="Remove this item" onClick={() => handleRemoveItem(idx)} />}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -437,6 +521,9 @@ export default function AddSalesBillForm() {
             <div key={idx} className="border rounded p-3 shadow-sm">
               <p className="font-medium text-gray-600 mb-2">
                 Item {idx + 1} – {(item.qty * item.rate).toFixed(2)}
+                {idx !== 0 && <span className="float-right text-red-600 hover:text-red-800 cursor-pointer">
+                  <FiTrash2 title="Remove this item" onClick={() => handleRemoveItem(idx)} />
+                </span>}
               </p>
               <input
                 type="text"
@@ -485,18 +572,23 @@ export default function AddSalesBillForm() {
           ))}
         </div>
 
-        <button
+        {items?.length < 17 ? <button
           type="button"
           onClick={handleAddItem}
           className="mt-3 bg-blue-500 text-white px-3 py-1 rounded"
         >
-          + Add Item
+          <div className="flex flex-row items-center gap-1">
+            <BsFillPlusCircleFill /> Item
+          </div>
         </button>
+          :
+          <div className="bg-yellow-50 rounded text-bold p-2">Warning! Maximum items reached</div>
+        }
       </div>
 
       {/* Totals */}
-      <div className="bg-gray-50 p-3 rounded mb-4 text-right flex flex-row gap-3 justify-between">
-        <div className="w-1/2">
+      <div className="bg-gray-50 p-3 rounded mb-4 text-right flex flex-col sm:flex-row gap-3 justify-between">
+        <div className="w-full sm:w-1/2">
           <textarea
             id="comments"
             rows={4}
@@ -505,11 +597,12 @@ export default function AddSalesBillForm() {
             className="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        <div>
+        <div className="w-full sm:w-auto text-right">
           <p>Subtotal: {formatCurrency(totals.totalBeforeTax.toFixed(2))}</p>
           <p>
             GST {getGstPercent()}: {formatCurrency(totals.totalGST.toFixed(2))}
           </p>
+          <p>Round Up: {formatCurrency(totals.roundUp.toFixed(2))}</p>
           <p className="font-bold">
             Total: {formatCurrency(totals.totalAmount.toFixed(2))}
           </p>
@@ -524,7 +617,7 @@ export default function AddSalesBillForm() {
       <div className="flex flex-col sm:flex-row gap-3 justify-end">
         <button
           className="bg-gray-400 text-white px-4 py-2 rounded"
-          onClick={() => navigate("/sales", { state: { companyId } })}
+          onClick={() => navigate(ROUTES?.SALES, { state: { companyId, companyName } })}
         >
           Cancel
         </button>
