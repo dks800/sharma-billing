@@ -27,31 +27,26 @@ const CustomerDropdown: React.FC<CustomerDropdownProps> = ({
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.gstin?.toLowerCase().includes(search.toLowerCase())
-  );
+  )?.sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="relative w-full">
-      {/* Trigger */}
       <div
         className="border rounded p-2 cursor-pointer bg-white"
         onClick={() => setOpen(!open)}
       >
-        {value ? (
-          <div>
-            <div className="font-medium">{value.name}</div>
-            <div className="text-sm text-gray-500">
-              {value.gstin || "No GSTIN"}
-            </div>
+        {value && Object?.keys(value)?.length ? (
+          <div className="text-sm text-gray-500 max-w-[200px] truncate">
+            <span className="font-medium text-black">{value.name}</span> ({value.gstin || "No GSTIN"})
           </div>
+
         ) : (
           <span className="text-gray-400">{placeholder}</span>
         )}
       </div>
 
-      {/* Dropdown */}
       {open && (
         <div className="absolute z-10 mt-1 w-full bg-white border rounded shadow-lg max-h-60 overflow-y-auto">
-          {/* Search box inside dropdown */}
           <div className="p-2">
             <input
               type="text"

@@ -7,7 +7,7 @@ import CustomerDropdown, { Client } from "../customer/CustomerDropdown";
 import { formatCurrency, numberToWords } from "../../utils/commonUtils";
 import { getFinancialYear } from "../../utils/billingHelper";
 import Modal from "../common/Modal";
-import { ROUTES } from "../../constants";
+import { PAYMENT_STATUSES, ROUTES } from "../../constants";
 import { BiPencil } from "react-icons/bi";
 import { FiTrash2 } from "react-icons/fi";
 
@@ -35,23 +35,29 @@ export default function EditSalesBillForm() {
 
   const [billNumber, setBillNumber] = useState<string>(bill?.billNumber || "");
   const [billDate, setBillDate] = useState<string>(
-    bill?.billDate?.substring(0, 10) || new Date().toISOString().substring(0, 10)
+    bill?.billDate?.substring(0, 10) ||
+      new Date().toISOString().substring(0, 10)
   );
   const [paymentStatus, setPaymentStatus] = useState<
     "Paid" | "Pending" | "Partially Paid"
   >((bill?.paymentStatus as any) || "Pending");
-  const [comments, setComments] = useState<string>(bill?.comments || "");
+  const [internalComments, setInternalComments] = useState<string>(
+    bill?.internalComments || ""
+  );
+  const [externalComments, setExternalComments] = useState<string>(
+    bill?.externalComments || ""
+  );
   const [items, setItems] = useState<Item[]>(bill?.items || []);
   const [taxType, setTaxType] = useState<string>(bill?.taxType || "0");
   const [customers, setCustomers] = useState<Client[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Client>(
     bill
       ? {
-        id: bill.customerId || "",
-        name: bill.customerName,
-        taxType: bill.taxType,
-        gstin: bill.customerGSTIN,
-      }
+          id: bill.customerId || "",
+          name: bill.customerName,
+          taxType: bill.taxType,
+          gstin: bill.customerGSTIN,
+        }
       : ({} as Client)
   );
   const [loading, setLoading] = useState(false);
@@ -82,12 +88,10 @@ export default function EditSalesBillForm() {
     ]);
   };
 
-
   const handleRemoveItem = (index: number) => {
     const updated: any = [...items]?.filter((_, idx) => idx !== index);
     setItems(updated);
-  }
-
+  };
 
   const handleItemChange = (index: number, field: keyof Item, value: any) => {
     const updated: any = [...items];
@@ -130,30 +134,67 @@ export default function EditSalesBillForm() {
       billNumber: "Bill Number",
       billDate: "Bill Date",
       paymentStatus: "Payment Status",
-      comments: "Comments",
+      internalComments: "Internal Comments",
+      externalComments: "External Comments",
       taxType: "Tax Type",
       customerName: "Customer",
       customerGSTIN: "Customer GSTIN",
     };
 
     if (bill.billNumber !== billNumber)
-      changes.push({ field: fieldMap.billNumber, before: bill.billNumber, after: billNumber });
+      changes.push({
+        field: fieldMap.billNumber,
+        before: bill.billNumber,
+        after: billNumber,
+      });
     if (bill.billDate?.substring(0, 10) !== billDate)
-      changes.push({ field: fieldMap.billDate, before: bill.billDate, after: billDate });
+      changes.push({
+        field: fieldMap.billDate,
+        before: bill.billDate,
+        after: billDate,
+      });
     if (bill.paymentStatus !== paymentStatus)
-      changes.push({ field: fieldMap.paymentStatus, before: bill.paymentStatus, after: paymentStatus });
-    if (bill.comments !== comments)
-      changes.push({ field: fieldMap.comments, before: bill.comments, after: comments });
+      changes.push({
+        field: fieldMap.paymentStatus,
+        before: bill.paymentStatus,
+        after: paymentStatus,
+      });
+    if (bill.internalComments !== internalComments)
+      changes.push({
+        field: fieldMap.internalComments,
+        before: bill.internalComments,
+        after: internalComments,
+      });
+    if (bill.externalComments !== externalComments)
+      changes.push({
+        field: fieldMap.externalComments,
+        before: bill.externalComments,
+        after: externalComments,
+      });
     if (bill.taxType !== taxType)
-      changes.push({ field: fieldMap.taxType, before: bill.taxType, after: taxType });
+      changes.push({
+        field: fieldMap.taxType,
+        before: bill.taxType,
+        after: taxType,
+      });
     if (bill.customerName !== selectedCustomer?.name)
-      changes.push({ field: fieldMap.customerName, before: bill.customerName, after: selectedCustomer?.name });
+      changes.push({
+        field: fieldMap.customerName,
+        before: bill.customerName,
+        after: selectedCustomer?.name,
+      });
     if (bill.customerGSTIN !== selectedCustomer?.gstin)
-      changes.push({ field: fieldMap.customerGSTIN, before: bill.customerGSTIN, after: selectedCustomer?.gstin });
+      changes.push({
+        field: fieldMap.customerGSTIN,
+        before: bill.customerGSTIN,
+        after: selectedCustomer?.gstin,
+      });
 
     items.forEach((item, idx) => {
       const orig = bill.items[idx] || {};
-      (["description", "hsnCode", "qty", "unit", "rate"] as (keyof Item)[]).forEach((key) => {
+      (
+        ["description", "hsnCode", "qty", "unit", "rate"] as (keyof Item)[]
+      ).forEach((key) => {
         if (item[key] !== orig[key]) {
           changes.push({
             field: `Item ${idx + 1} → ${key}`,
@@ -184,8 +225,12 @@ export default function EditSalesBillForm() {
           {changes.map((c, idx) => (
             <div key={idx} className="p-2 border rounded">
               <p className="font-medium">{c.field}</p>
-              <p className="text-sm bg-red-100 p-1 rounded">Before: {String(c.before || "-")}</p>
-              <p className="text-sm bg-green-100 p-1 rounded">After: {String(c.after || "-")}</p>
+              <p className="text-sm bg-red-100 p-1 rounded">
+                Before: {String(c.before || "-")}
+              </p>
+              <p className="text-sm bg-green-100 p-1 rounded">
+                After: {String(c.after || "-")}
+              </p>
             </div>
           ))}
         </div>
@@ -230,7 +275,8 @@ export default function EditSalesBillForm() {
       totalGST: totals.totalGST,
       totalAmount: totals.totalAmount,
       paymentStatus,
-      comments,
+      internalComments,
+      externalComments,
       taxType,
       updatedAt: new Date(),
     });
@@ -293,9 +339,11 @@ export default function EditSalesBillForm() {
             onChange={(e) => setPaymentStatus(e.target.value as any)}
             className="w-full border rounded p-2"
           >
-            <option value="Paid">Paid</option>
-            <option value="Pending">Pending</option>
-            <option value="Partially Paid">Partially Paid</option>
+            {PAYMENT_STATUSES?.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -351,7 +399,10 @@ export default function EditSalesBillForm() {
                 return (
                   <tr key={idx} className="border-t">
                     <td className="px-2 py-1 border text-center">
-                      {idx + 1} {isChanged && <BiPencil className="inline w-4 h-4 text-orange-500 ml-1" />}
+                      {idx + 1}{" "}
+                      {isChanged && (
+                        <BiPencil className="inline w-4 h-4 text-orange-500 ml-1" />
+                      )}
                     </td>
                     <td className="px-2 py-1 border">
                       <input
@@ -407,7 +458,12 @@ export default function EditSalesBillForm() {
                       {formatCurrency((item.qty * item.rate).toFixed(2))}
                     </td>
                     <td className="px-2 py-1 border text-center cursor-pointer text-red-600 hover:text-red-800">
-                      {idx !== 0 && <FiTrash2 title="Remove this item" onClick={() => handleRemoveItem(idx)} />}
+                      {idx !== 0 && (
+                        <FiTrash2
+                          title="Remove this item"
+                          onClick={() => handleRemoveItem(idx)}
+                        />
+                      )}
                     </td>
                   </tr>
                 );
@@ -430,7 +486,10 @@ export default function EditSalesBillForm() {
             return (
               <div key={idx} className="border rounded p-3 shadow-sm">
                 <p className="font-medium text-gray-600 mb-2">
-                  Item {idx + 1} {isChanged && <BiPencil className="inline w-4 h-4 text-orange-500 ml-1" />}
+                  Item {idx + 1}{" "}
+                  {isChanged && (
+                    <BiPencil className="inline w-4 h-4 text-orange-500 ml-1" />
+                  )}
                   – {(item.qty * item.rate).toFixed(2)}
                 </p>
                 <input
@@ -496,13 +555,21 @@ export default function EditSalesBillForm() {
 
       {/* Totals */}
       <div className="bg-gray-50 p-3 rounded mb-4 text-right flex flex-row gap-3 justify-between">
-        <div className="w-1/2">
+        <div className="w-1/2 flex gap-2">
           <textarea
-            id="comments"
+            id="int-comments"
             rows={4}
-            placeholder="Comments (optional)"
-            value={comments}
-            onChange={(e) => setComments(e.target.value)}
+            placeholder="Internal Comments (optional)"
+            value={internalComments}
+            onChange={(e) => setInternalComments(e.target.value)}
+            className="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <textarea
+            id="external-comments"
+            rows={4}
+            placeholder="External Comments (optional)"
+            value={externalComments}
+            onChange={(e) => setExternalComments(e.target.value)}
             className="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -524,15 +591,18 @@ export default function EditSalesBillForm() {
       <div className="flex flex-col sm:flex-row gap-3 justify-end">
         <button
           className="bg-blue-400 hover:bg-blue-600 text-white px-4 py-2 rounded"
-          onClick={() => navigate(ROUTES?.SALES, { state: { companyId, companyName } })}
+          onClick={() =>
+            navigate(ROUTES?.SALES, { state: { companyId, companyName } })
+          }
         >
           Cancel
         </button>
         <button
-          className={`px-5 py-2 rounded ${hasChanges
-            ? "bg-green-600 hover:bg-green-700 text-white"
-            : "bg-gray-300 text-gray-600 cursor-not-allowed"
-            }`}
+          className={`px-5 py-2 rounded ${
+            hasChanges
+              ? "bg-green-600 hover:bg-green-700 text-white"
+              : "bg-gray-300 text-gray-600 cursor-not-allowed"
+          }`}
           onClick={handlePreview}
           disabled={!hasChanges}
         >
@@ -547,7 +617,8 @@ export default function EditSalesBillForm() {
           type={modalAttr.type}
           onClose={handleModalClose}
           footer={modalAttr.footer}
-          isOpen={showConfirm} >
+          isOpen={showConfirm}
+        >
           {modalAttr.content}
         </Modal>
       )}

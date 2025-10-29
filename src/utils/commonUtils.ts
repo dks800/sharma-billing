@@ -1,5 +1,5 @@
-export function numberToWords(num: number): string {
-  if (num === 0) return "Zero Rupees Only";
+export function numberToWords(num: number, currency = "Rupees"): string {
+  if (num === 0) return `Zero ${currency} Only`;
 
   const a = [
     "",
@@ -66,7 +66,7 @@ export function numberToWords(num: number): string {
   const rupees = Math.floor(num);
   const paise = Math.round((num - rupees) * 100);
 
-  let words = inWords(rupees) + " Rupees";
+  let words = inWords(rupees) + " " + currency;
   if (paise > 0) {
     words += " and " + inWords(paise) + " Paise";
   }
@@ -74,7 +74,10 @@ export function numberToWords(num: number): string {
   return words + " Only";
 }
 
-export function formatCurrency(amount: string | number, showCurrency = false): string {
+export function formatCurrency(
+  amount: string | number,
+  showCurrency = false
+): string {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
 
   if (isNaN(num)) return `${showCurrency ? "Rs. " : ""}0.00`;
@@ -84,7 +87,9 @@ export function formatCurrency(amount: string | number, showCurrency = false): s
     currency: "INR",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(num)?.replace("₹", showCurrency ? "Rs. " : "");
+  })
+    .format(num)
+    ?.replace("₹", showCurrency ? "Rs. " : "");
 }
 
 export function formatDate(dateStr: string | Date): string {
@@ -103,4 +108,3 @@ export const formatFinYear = (input: string) => {
   if (!input) return "";
   return input?.replace(/(\d{2})(\d{2})\D+(\d{2})(\d{2})/, "$2-$4");
 };
-

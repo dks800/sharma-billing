@@ -9,11 +9,11 @@ import Loader from "../components/Loader";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import CustomerListPDF from "../components/customer/CustomerListPDF";
 import { toast } from "react-toastify";
+import { BsFillPlusCircleFill } from "react-icons/bs";
 
 export default function CustomerListPage() {
-  const PAGE_SIZE = 10;
-
   const [search, setSearch] = useState("");
+  const [pageSize, setPageSize] = useState(10);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<any | null>(null);
   const [sortField, setSortField] = useState("name");
@@ -29,7 +29,6 @@ export default function CustomerListPage() {
     updateItem,
     deleteItem,
   } = useClients({
-    limit: PAGE_SIZE,
     orderByField: sortField,
     orderDirection,
   });
@@ -44,20 +43,41 @@ export default function CustomerListPage() {
   }, [clients, search]);
 
   const paginatedClients = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    return filteredClients.slice(start, start + PAGE_SIZE);
-  }, [filteredClients, page]);
+    const start = (page - 1) * pageSize;
+    return filteredClients.slice(start, start + pageSize);
+  }, [filteredClients, page, pageSize]);
 
-  const totalPages = Math.ceil(filteredClients.length / PAGE_SIZE);
+  const totalPages = Math.ceil(filteredClients.length / pageSize);
 
   const handleSave = async (clientData: any) => {
-    if (editingClient) {
-      await updateItem(editingClient.id, clientData);
-    } else {
-      await addItem({ ...clientData, createdAt: new Date() });
+    try {
+      const existingClient = clients.find(
+        (c) =>
+          c.gstin?.trim().toLowerCase() ===
+          clientData.gstin?.trim().toLowerCase()
+      );
+
+      if (!editingClient && existingClient) {
+        toast.warning(
+          `Customer with GSTIN ${clientData.gstin} already exists: ${existingClient.name}`
+        );
+        return;
+      }
+
+      if (editingClient) {
+        await updateItem(editingClient.id, clientData);
+        toast.success("Client updated successfully");
+      } else {
+        await addItem({ ...clientData, createdAt: new Date() });
+        toast.success("Client added successfully");
+      }
+
+      setEditingClient(null);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Error saving client:", error);
+      toast.error("Failed to save client");
     }
-    setEditingClient(null);
-    setIsModalOpen(false);
   };
 
   const toggleSortDirection = () => {
@@ -69,7 +89,6 @@ export default function CustomerListPage() {
     if (!confirmDelete) return;
 
     try {
-      // Prevent deleting if client has bills
       const billsRef = collection(db, "invoices");
       const q = query(billsRef, where("clientId", "==", confirmDelete.id));
       const snap = await getDocs(q);
@@ -119,35 +138,38 @@ export default function CustomerListPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="border p-2 rounded w-full sm:w-1/3"
         />
+        <div className="flex items-center gap-2">
+          <button
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center gap-1"
+            onClick={() => {
+              setEditingClient(null);
+              setIsModalOpen(true);
+            }}
+          >
+            <BsFillPlusCircleFill /> Add Client
+          </button>
 
-        <button
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-1"
-          onClick={() => {
-            setEditingClient(null);
-            setIsModalOpen(true);
-          }}
-        >
-          <FiPlus /> Add Client
-        </button>
-
-        <PDFDownloadLink
-          document={<CustomerListPDF clients={clients} />}
-          fileName="client_list.pdf"
-        >
-          {({ loading }) => (
-            <button
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
-              onClick={() => {
-                if (!loading) {
-                  toast.success("✅ PDF download started!");
-                }
-              }}
+          {clients?.length && (
+            <PDFDownloadLink
+              document={<CustomerListPDF clients={clients} />}
+              fileName="client_list.pdf"
             >
-              <FiDownload className="text-lg" />
-              {loading ? "Generating PDF..." : "Export"}
-            </button>
+              {({ loading }) => (
+                <button
+                  className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 flex items-center gap-2"
+                  onClick={() => {
+                    if (!loading) {
+                      toast.success("✅ PDF download started!");
+                    }
+                  }}
+                >
+                  <FiDownload className="text-lg" />
+                  {loading ? "Generating PDF..." : "Export"}
+                </button>
+              )}
+            </PDFDownloadLink>
           )}
-        </PDFDownloadLink>
+        </div>
       </div>
 
       {/* Add/Edit Modal */}
@@ -230,9 +252,7 @@ export default function CustomerListPage() {
                       key={client.id}
                       className="border-t cursor-pointer hover:bg-gray-50"
                     >
-                      <td className="p-2">
-                        {(page - 1) * PAGE_SIZE + idx + 1}
-                      </td>
+                      <td className="p-2">{(page - 1) * pageSize + idx + 1}</td>
                       <td className="p-2">{client.gstin || "-"}</td>
                       <td className="p-2">{client.name}</td>
                       <td className="p-2">{client.poc || "-"}</td>
@@ -321,7 +341,7 @@ export default function CustomerListPage() {
               </span>
               <button
                 disabled={
-                  page === totalPages || filteredClients.length < PAGE_SIZE
+                  page === totalPages || filteredClients.length < pageSize
                 }
                 onClick={() => setPage((p) => p + 1)}
                 className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
@@ -331,6 +351,20 @@ export default function CustomerListPage() {
             </div>
           </>
         )}
+      </div>
+      <div className="flex gap-2 items-center">
+        <span className="text-sm">Page Size:</span>
+        <select
+          value={pageSize}
+          onChange={(e) => setPageSize(Number(e.target.value))}
+          className="p-1 rounded-full"
+        >
+          <option value={5}>5</option>
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+          <option value={50}>50</option>
+          <option value={100}>100</option>
+        </select>
       </div>
     </div>
   );

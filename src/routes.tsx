@@ -15,6 +15,9 @@ import CompanySelectorPage from "./components/companies/CompanySelector";
 import AddSalesBillForm from "./components/invoices/AddSalesBillForm";
 import EditSalesBillForm from "./components/invoices/EditSalesBillForm";
 import { ROUTES } from "./constants";
+import AddPurchaseBillForm from "./components/invoices/AddPurchaseBillForm";
+import EditPurchaseBillForm from "./components/invoices/EditPurchaseBillForm";
+import { PageNotFound } from "./components/common/PageNotFound";
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const [user, loading] = useAuthState(auth);
@@ -45,23 +48,30 @@ export default function AppRoutes() {
           }
         >
           <Route index element={<Dashboard />} />
-          <Route path="/companies" element={<CompanyList />} />
-          <Route path="/customers" element={<CustomerListPage />} />
-          <Route path="/sales" element={<SalesList />} />
-          <Route path="/purchase" element={<PurchaseList />} />
+          <Route path={ROUTES?.COMPANIES} element={<CompanyList />} />
+          <Route path={ROUTES?.CUSTOMERS} element={<CustomerListPage />} />
+          <Route path={ROUTES?.SALES} element={<SalesList />} />
+          <Route path={ROUTES?.PURCHASE} element={<PurchaseList />} />
           <Route
-            path="/select-company-sales"
+            path={ROUTES?.SELECTCOMPANYSALES}
             element={<CompanySelectorPage redirectTo="sales" />}
           />
           <Route
-            path="/select-company-purchase"
+            path={ROUTES?.SELECTCOMPANYPURCHASE}
             element={<CompanySelectorPage redirectTo="purchase" />}
           />
-          <Route path="/add-sales" element={<AddSalesBillForm />} />
-          <Route path="/edit-sales" element={<EditSalesBillForm />} />
-          {/* <Route path="/invoices" element={<InvoiceTypeSelector />} />
-          <Route path="/invoices/:type" element={<InvoiceList />} /> */}
-          <Route path="*" element={<p>Page Not Found</p>} />
+          <Route
+            path={ROUTES?.SELECTCOMPANYQUOTE}
+            element={<CompanySelectorPage redirectTo="quotations" />}
+          />
+          <Route path={ROUTES?.ADDSALES} element={<AddSalesBillForm />} />
+          <Route path={ROUTES?.EDITSALES} element={<EditSalesBillForm />} />
+          <Route path={ROUTES?.ADDPURCHASE} element={<AddPurchaseBillForm />} />
+          <Route
+            path={ROUTES?.EDITPURCHASE}
+            element={<EditPurchaseBillForm />}
+          />
+          <Route path="*" element={<PageNotFound />} />
         </Route>
       </Routes>
     </BrowserRouter>

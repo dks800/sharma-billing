@@ -6,7 +6,12 @@ import { getNextBillNumber, getFinancialYear } from "../../utils/billingHelper";
 import CustomerDropdown, { Client } from "../customer/CustomerDropdown";
 import { formatCurrency, numberToWords } from "../../utils/commonUtils";
 import Modal from "../common/Modal";
-import { ROUTES } from "../../constants";
+import {
+  globalCurrencies,
+  PAYMENT_STATUSES,
+  ROUTES,
+  TAX_TYPES,
+} from "../../constants";
 import { FiTrash2 } from "react-icons/fi";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 
@@ -36,8 +41,9 @@ export default function AddSalesBillForm() {
   );
 
   const [billNumber, setBillNumber] = useState<string>("");
+  const [currency, setCurrency] = useState("INR");
   const [autoBillNumber, setAutoBillNumber] = useState("");
-  const [locationFrom, setLocationFrom] = useState("");
+  const [locationFrom, setLocationFrom] = useState("Vijapur");
   const [locationTo, setLocationTo] = useState("");
   const [ewayBillNo, setEwayBillNo] = useState("");
   const [dispatchBy, setDispatchBy] = useState("");
@@ -56,9 +62,10 @@ export default function AddSalesBillForm() {
   const [paymentStatus, setPaymentStatus] = useState<
     "Paid" | "Pending" | "Partially Paid"
   >("Pending");
-  const [comments, setComments] = useState<string>("");
+  const [internalComments, setInternalComments] = useState<string>("");
+  const [externalComments, setExternalComments] = useState<string>("");
   const [items, setItems] = useState<Item[]>([
-    { description: "", hsnCode: "", qty: 1, unit: "pcs", rate: 0 },
+    { description: "", hsnCode: "8464", qty: 1, unit: "pcs", rate: 0 },
   ]);
   const [loading, setLoading] = useState(false);
   const [taxType, setTaxType] = useState<string>("0");
@@ -98,14 +105,14 @@ export default function AddSalesBillForm() {
   const handleAddItem = () => {
     setItems([
       ...items,
-      { description: "", hsnCode: "", qty: 1, unit: "", rate: 0 },
+      { description: "", hsnCode: "8464", qty: 1, unit: "", rate: 0 },
     ]);
   };
 
   const handleRemoveItem = (index: number) => {
     const updated: any = [...items]?.filter((_, idx) => idx !== index);
     setItems(updated);
-  }
+  };
 
   const handleItemChange = (index: number, field: keyof Item, value: any) => {
     const updated: any = [...items];
@@ -133,7 +140,8 @@ export default function AddSalesBillForm() {
     return {
       totalBeforeTax,
       totalGST,
-      roundUp: Math.ceil(totalBeforeTax + totalGST) - (totalBeforeTax + totalGST),
+      roundUp:
+        Math.ceil(totalBeforeTax + totalGST) - (totalBeforeTax + totalGST),
       totalAmount: Math.ceil(totalBeforeTax + totalGST),
     };
   };
@@ -141,12 +149,16 @@ export default function AddSalesBillForm() {
   const handleSave = async () => {
     let errorMsg = "";
     if (!companyId) errorMsg = "Select a company first!";
-    if (!selectedCustomer?.gstin) errorMsg = "Customer Missing. Please select a customer";
+    if (!selectedCustomer?.gstin)
+      errorMsg = "Customer Missing. Please select a customer";
     if (!addSalesBill) errorMsg = "Hook not ready. Reload App!";
     const totals = calculateTotals();
-    const duplicateBill = existingBills.find((b: any) => b.billNumber === billNumber);
+    const duplicateBill = existingBills.find(
+      (b: any) => b.billNumber === billNumber
+    );
     if (duplicateBill) errorMsg = "Invoice number already exists!";
-    errorMsg = totals.totalAmount === 0 ? "Total amount cannot be zero!" : errorMsg;
+    errorMsg =
+      totals.totalAmount === 0 ? "Total amount cannot be zero!" : errorMsg;
     if (errorMsg && errorMsg?.length > 0) {
       setShowConfirm(true);
       return setModalAttr({
@@ -179,8 +191,7 @@ export default function AddSalesBillForm() {
       setShowConfirm(true);
       setModalAttr({
         title: "Warning!",
-        content:
-          `You have changed the auto-generated Bill Number from ${autoBillNumber} to ${billNumber}. Do you want to continue?`,
+        content: `You have changed the auto-generated Bill Number from ${autoBillNumber} to ${billNumber}. Do you want to continue?`,
         type: "warning",
         footer: getBillNumberChangeWarningFooter(),
       });
@@ -203,7 +214,9 @@ export default function AddSalesBillForm() {
       roundUp: totals.roundUp,
       totalAmount: totals.totalAmount,
       paymentStatus,
-      comments,
+      currency,
+      internalComments,
+      externalComments,
       taxType,
       locationFrom,
       locationTo,
@@ -222,7 +235,8 @@ export default function AddSalesBillForm() {
     setBillDate(new Date().toISOString().substring(0, 10));
     setSelectedCustomer({} as Client);
     setPaymentStatus("Pending");
-    setComments("");
+    setInternalComments("");
+    setExternalComments("");
     setItems([{ description: "", hsnCode: "", qty: 1, unit: "pcs", rate: 0 }]);
   };
 
@@ -342,23 +356,42 @@ export default function AddSalesBillForm() {
             onChange={(e) => setPaymentStatus(e.target.value as any)}
             className="w-full border rounded p-2"
           >
-            <option value="Paid">Paid</option>
-            <option value="Pending">Pending</option>
-            <option value="Partially Paid">Partially Paid</option>
+            {PAYMENT_STATUSES?.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
           </select>
         </div>
-        <div>
-          <label className="block font-medium mb-1">Tax Type</label>
-          <select
-            value={taxType}
-            onChange={(e) => setTaxType(e.target.value as any)}
-            className="w-full border rounded p-2"
-          >
-            <option value="2.5">2.5%</option>
-            <option value="9">9% + 9%</option>
-            <option value="18">18%</option>
-            <option value="NA">NA</option>
-          </select>
+        <div className="flex w-full gap-2">
+          <div className="flex-1">
+            <label className="block font-medium mb-1">Tax Type %</label>
+            <select
+              value={taxType}
+              onChange={(e) => setTaxType(e.target.value as any)}
+              className="w-full border rounded p-2"
+            >
+              {TAX_TYPES?.map((tax) => (
+                <option key={tax} value={tax}>
+                  {tax === "NA" || tax === "18" ? tax : `${tax} + ${tax}`}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1">
+            <label className="block font-medium mb-1">Currency</label>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as any)}
+              className="w-full border rounded p-2"
+            >
+              {globalCurrencies?.map((curr, idx) => (
+                <option key={curr?.code + idx} value={curr?.code}>
+                  {`${curr?.code} - ${curr?.name}`}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         <div>
           <label className="block font-medium mb-1">From Location</label>
@@ -397,7 +430,9 @@ export default function AddSalesBillForm() {
           />
         </div>
         <div>
-          <label className="block font-medium mb-1">Eway Bill Date & Time</label>
+          <label className="block font-medium mb-1">
+            Eway Bill Date & Time
+          </label>
           <input
             type="input"
             value={ewayBillDateTime}
@@ -421,7 +456,7 @@ export default function AddSalesBillForm() {
           />
         </div>
         <button
-          className="bg-green-500 text-white px-3 py-2 rounded"
+          className="bg-green-500 text-white px-3 py-2 rounded sm:mt-4"
           onClick={() => navigate(ROUTES?.CUSTOMERS)}
         >
           <div className="flex flex-row items-center gap-1">
@@ -507,7 +542,12 @@ export default function AddSalesBillForm() {
                     {formatCurrency((item.qty * item.rate).toFixed(2))}
                   </td>
                   <td className="px-2 py-1 border text-center cursor-pointer text-red-600 hover:text-red-800">
-                    {idx !== 0 && <FiTrash2 title="Remove this item" onClick={() => handleRemoveItem(idx)} />}
+                    {idx !== 0 && (
+                      <FiTrash2
+                        title="Remove this item"
+                        onClick={() => handleRemoveItem(idx)}
+                      />
+                    )}
                   </td>
                 </tr>
               ))}
@@ -521,9 +561,14 @@ export default function AddSalesBillForm() {
             <div key={idx} className="border rounded p-3 shadow-sm">
               <p className="font-medium text-gray-600 mb-2">
                 Item {idx + 1} – {(item.qty * item.rate).toFixed(2)}
-                {idx !== 0 && <span className="float-right text-red-600 hover:text-red-800 cursor-pointer">
-                  <FiTrash2 title="Remove this item" onClick={() => handleRemoveItem(idx)} />
-                </span>}
+                {idx !== 0 && (
+                  <span className="float-right text-red-600 hover:text-red-800 cursor-pointer">
+                    <FiTrash2
+                      title="Remove this item"
+                      onClick={() => handleRemoveItem(idx)}
+                    />
+                  </span>
+                )}
               </p>
               <input
                 type="text"
@@ -572,29 +617,41 @@ export default function AddSalesBillForm() {
           ))}
         </div>
 
-        {items?.length < 17 ? <button
-          type="button"
-          onClick={handleAddItem}
-          className="mt-3 bg-blue-500 text-white px-3 py-1 rounded"
-        >
-          <div className="flex flex-row items-center gap-1">
-            <BsFillPlusCircleFill /> Item
+        {items?.length < 17 ? (
+          <button
+            type="button"
+            onClick={handleAddItem}
+            className="mt-3 bg-blue-500 text-white px-3 py-1 rounded"
+          >
+            <div className="flex flex-row items-center gap-1">
+              <BsFillPlusCircleFill /> Item
+            </div>
+          </button>
+        ) : (
+          <div className="bg-yellow-50 rounded text-bold p-2">
+            Warning! Maximum items reached
           </div>
-        </button>
-          :
-          <div className="bg-yellow-50 rounded text-bold p-2">Warning! Maximum items reached</div>
-        }
+        )}
       </div>
 
       {/* Totals */}
       <div className="bg-gray-50 p-3 rounded mb-4 text-right flex flex-col sm:flex-row gap-3 justify-between">
-        <div className="w-full sm:w-1/2">
+        <div className="w-full sm:w-1/2 flex gap-2">
           <textarea
             id="comments"
             rows={4}
-            placeholder="Comments (optional)"
-            onChange={(e) => setComments(e.target.value)}
-            className="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={internalComments}
+            placeholder="Internal Comments (optional)"
+            onChange={(e) => setInternalComments(e.target.value)}
+            className="w-full flex-1 border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <textarea
+            id="external-comments"
+            rows={4}
+            value={externalComments}
+            placeholder="External Comments (optional)"
+            onChange={(e) => setExternalComments(e.target.value)}
+            className="w-full flex-1 border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <div className="w-full sm:w-auto text-right">
@@ -610,14 +667,19 @@ export default function AddSalesBillForm() {
       </div>
       <p className="mt-4 mb-4 font-semibold text-right">
         (In words):{" "}
-        {numberToWords(Math.round(Number(totals.totalAmount.toFixed(2))))}
+        {numberToWords(
+          Math.round(Number(totals.totalAmount.toFixed(2))),
+          currency
+        )}
       </p>
 
       {/* Footer Buttons */}
       <div className="flex flex-col sm:flex-row gap-3 justify-end">
         <button
           className="bg-gray-400 text-white px-4 py-2 rounded"
-          onClick={() => navigate(ROUTES?.SALES, { state: { companyId, companyName } })}
+          onClick={() =>
+            navigate(ROUTES?.SALES, { state: { companyId, companyName } })
+          }
         >
           Cancel
         </button>
@@ -636,7 +698,6 @@ export default function AddSalesBillForm() {
         </button>
       </div>
 
-      {/* ⚠️ Confirm Modal */}
       {showConfirm && (
         <>
           <Modal
@@ -649,34 +710,6 @@ export default function AddSalesBillForm() {
           >
             {modalAttr.content}
           </Modal>
-          {/* <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-              <h2 className="text-lg font-semibold text-red-600 mb-4">
-                Warning!
-              </h2>
-              <p className="mb-6">
-                You have changed the auto-generated Bill Number. Do you want to
-                continue?
-              </p>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setShowConfirm(false)}
-                  className="px-4 py-2 border rounded hover:bg-gray-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    setShowConfirm(false);
-                    handleSave();
-                  }}
-                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                >
-                  Yes, Save Anyway
-                </button>
-              </div>
-            </div>
-          </div> */}
         </>
       )}
     </div>

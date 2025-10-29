@@ -9,6 +9,7 @@ import Loader from "../components/Loader";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import CompanyListPDF from "../components/companies/CompanyListPDF";
 import { toast } from "react-toastify";
+import { BsFillPlusCircleFill } from "react-icons/bs";
 
 export interface BankAccount {
   bankName: string;
@@ -108,15 +109,6 @@ export default function CompanyList() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between gap-3 sm:items-center">
-        <button
-          onClick={() => {
-            setEditCompany(null);
-            setShowFormModal(true);
-          }}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-1 w-full sm:w-auto justify-center"
-        >
-          <FiPlus /> New Company
-        </button>
         <input
           type="text"
           placeholder="Search company..."
@@ -124,25 +116,37 @@ export default function CompanyList() {
           onChange={(e) => setSearch(e.target.value)}
           className="border p-2 rounded w-full sm:w-64"
         />
-        <PDFDownloadLink
-          document={<CompanyListPDF companies={companies} />}
-          fileName="company_list.pdf"
-        >
-          {({ loading }) => (
-            <button
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
-              onClick={() => {
-                if (!loading) {
-                  toast.success("✅ PDF download started!");
-                }
-              }}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setEditCompany(null);
+              setShowFormModal(true);
+            }}
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center gap-1 w-full sm:w-auto justify-center"
+          >
+            <BsFillPlusCircleFill /> New Company
+          </button>
+          {companies?.length && (
+            <PDFDownloadLink
+              document={<CompanyListPDF companies={companies} />}
+              fileName="company_list.pdf"
             >
-              <FiDownload className="text-lg" />
-              {loading ? "Generating PDF..." : "Export"}
-            </button>
+              {({ loading }) => (
+                <button
+                  className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 flex items-center gap-2"
+                  onClick={() => {
+                    if (!loading) {
+                      toast.success("✅ PDF download started!");
+                    }
+                  }}
+                >
+                  <FiDownload className="text-lg" />
+                  {loading ? "Generating PDF..." : "Export"}
+                </button>
+              )}
+            </PDFDownloadLink>
           )}
-        </PDFDownloadLink>
-
+        </div>
       </div>
 
       {showFormModal && (

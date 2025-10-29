@@ -23,10 +23,6 @@ export async function getNextBillNumber(companyId: string) {
   );
   const snapshot = await getDocs(q);
   if (!snapshot.empty) {
-    console.log(
-      "snapshot.docs[0].data().billNumber --->>",
-      snapshot.docs[0].data().billNumber
-    );
     const billNumber = snapshot.docs[0].data().billNumber;
     return !isNaN(Number(billNumber)) ? String(Number(billNumber) + 1) : "1";
   }

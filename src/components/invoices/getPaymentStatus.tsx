@@ -25,7 +25,7 @@ const renderPaymentStatus = (status: string) => {
           Paid
         </span>
       );
-    case "partially paid":
+    case "partial":
       return (
         <span className={`${baseClass} bg-yellow-100 text-yellow-700`}>
           <svg

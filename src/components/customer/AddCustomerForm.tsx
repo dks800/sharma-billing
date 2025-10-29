@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { FiPlus } from "react-icons/fi";
+import { TAX_TYPES } from "../../constants";
 
 interface AddCustomerFormProps {
   initialData?: any | null;
@@ -13,6 +14,7 @@ const AddCustomerForm = ({ initialData, onSave }: AddCustomerFormProps) => {
     email: "",
     phone: "",
     gstin: "",
+    lutArn: "",
     taxType: "",
     address: "",
   });
@@ -65,6 +67,14 @@ const AddCustomerForm = ({ initialData, onSave }: AddCustomerFormProps) => {
       />
       <input
         type="text"
+        name="lutArn"
+        placeholder="Lut/ARN"
+        value={formData.lutArn}
+        onChange={handleChange}
+        className="border p-2 rounded w-full"
+      />
+      <input
+        type="text"
         name="poc"
         placeholder="POC"
         value={formData.poc}
@@ -95,10 +105,13 @@ const AddCustomerForm = ({ initialData, onSave }: AddCustomerFormProps) => {
         required
       >
         <option value="">Select Tax Type</option>
-        <option value="2.5">2.5% + 2.5%</option>
-        <option value="9">9% + 9%</option>
-        <option value="18">18%</option>
-        <option value="NA">NA (0)</option>
+        {
+          TAX_TYPES?.map((tax) => (
+            <option key={tax} value={tax}>
+              {(tax === "NA" || tax === "18") ? tax : `${tax} + ${tax}`}
+            </option>
+          ))
+        }
       </select>
 
       <textarea
@@ -113,9 +126,8 @@ const AddCustomerForm = ({ initialData, onSave }: AddCustomerFormProps) => {
       <button
         type="submit"
         disabled={loading}
-        className={`w-full bg-green-500 text-white px-4 py-2 rounded flex items-center justify-center gap-2 hover:bg-green-600 ${
-          loading ? "cursor-not-allowed opacity-70" : ""
-        }`}
+        className={`w-full bg-green-500 text-white px-4 py-2 rounded flex items-center justify-center gap-2 hover:bg-green-600 ${loading ? "cursor-not-allowed opacity-70" : ""
+          }`}
       >
         {loading ? (
           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

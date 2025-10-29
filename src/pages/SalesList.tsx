@@ -3,16 +3,21 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useSalesBill } from "../hooks/useInvoices";
 import Loader from "../components/Loader";
 import { FiDownload, FiPrinter } from "react-icons/fi";
-import { formatCurrency, formatDate, formatFinYear } from "../utils/commonUtils";
+import {
+  formatCurrency,
+  formatDate,
+  formatFinYear,
+} from "../utils/commonUtils";
 import renderPaymentStatus from "../components/invoices/getPaymentStatus";
 import Modal from "../components/common/Modal";
 import DeleteSalesBillModal from "../components/invoices/DeleteSalesBillModal";
 import { ROUTES } from "../constants";
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
 import SalesListPDF from "../components/invoices/SalesListPDF";
 import { toast } from "react-toastify";
 import SingleBillPDF from "../components/invoices/SingleBillPDF";
 import { BsFillPlusCircleFill } from "react-icons/bs";
+import EmptyState from "../components/common/EmptyState";
 
 export default function SalesList() {
   const navigate = useNavigate();
@@ -122,16 +127,22 @@ export default function SalesList() {
     );
   };
 
+  useEffect(() => {
+    if (paginatedSales?.length) setSelectedBill(paginatedSales[0] || null);
+  }, [paginatedSales]);
+
   const renderSingleBillPrint = (bill: any) => {
-    console.log("bill -->>", bill?.items)
+    if (!bill) return null;
     return (
       <PDFDownloadLink
         document={<SingleBillPDF bill={bill} />}
-        fileName={`sales_${bill?.billNumber}_${formatFinYear(bill?.financialYear)}.pdf`}
+        fileName={`sales_${bill?.billNumber}_${formatFinYear(
+          bill?.financialYear
+        )}.pdf`}
         className="flex items-center gap-1 text-gray-700 hover:underline"
         onClick={(e) => {
           e.stopPropagation();
-          toast.success("✅ PDF download started!")
+          toast.success("PDF download started!");
         }}
       >
         {({ loading }) => {
@@ -152,32 +163,36 @@ export default function SalesList() {
         <h1 className="text-xl font-bold">Sales Bills - {companyName}</h1>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <div className="flex gap-2 w-full sm:w-auto justify-between">
-          <PDFDownloadLink
-            document={<SalesListPDF billList={sales} />}
-            fileName="sales_list.pdf"
-          >
-            {({ loading }) => (
-              <button
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
-                onClick={() => {
-                  if (!loading) {
-                    toast.success("✅ PDF download started!");
-                  }
-                }}
+            <button
+              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center gap-2"
+              onClick={() =>
+                navigate(ROUTES?.ADDSALES, {
+                  state: { companyId, companyName },
+                })
+              }
+            >
+              <BsFillPlusCircleFill /> Sales Bill
+            </button>
+            {sales?.length ? (
+              <PDFDownloadLink
+                document={<SalesListPDF billList={sales} />}
+                fileName="sales_list.pdf"
               >
-                <FiDownload className="text-lg" />
-                {loading ? "Loading..." : "Export List"}
-              </button>
-            )}
-          </PDFDownloadLink>
-          <button
-            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center gap-2"
-            onClick={() =>
-              navigate(ROUTES?.ADDSALES, { state: { companyId, companyName } })
-            }
-          >
-            <BsFillPlusCircleFill /> Sales Bill
-          </button>
+                {({ loading }) => (
+                  <button
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
+                    onClick={() => {
+                      if (!loading) {
+                        toast.success("PDF download started!");
+                      }
+                    }}
+                  >
+                    <FiDownload className="text-lg" />
+                    {loading ? "Loading..." : "Export List"}
+                  </button>
+                )}
+              </PDFDownloadLink>
+            ) : null}
           </div>
           <input
             type="text"
@@ -196,7 +211,13 @@ export default function SalesList() {
       ) : error ? (
         <p className="text-red-500">Error: {error.message}</p>
       ) : filteredSales.length === 0 ? (
-        <p className="text-gray-500">No sales bills found</p>
+        <EmptyState
+          title="No sales bills found"
+          ctaLabel={"+ Sales Bill"}
+          onCta={() =>
+            navigate(ROUTES?.ADDSALES, { state: { companyId, companyName } })
+          }
+        />
       ) : (
         <>
           {/* Desktop table */}
@@ -211,7 +232,7 @@ export default function SalesList() {
                     { label: "Customer", field: "customerName" },
                     { label: "Amount", field: "totalAmount" },
                     { label: "Payment Status", field: "paymentStatus" },
-                    { label: "Comments", field: "comments" },
+                    { label: "Comments", field: "internalComments" },
                   ].map((col) => (
                     <th
                       key={col.field}
@@ -340,161 +361,186 @@ export default function SalesList() {
       )}
 
       {/* Modal (shared for desktop + mobile) */}
-      {showDetailsModal && selectedBill && <Modal
-        title={`Bill #${selectedBill.billNumber} - ${companyName} (${getFinancialYear(
-          selectedBill.billDate
-        )})`}
-        type="info"
-        isOpen={showDetailsModal && selectedBill}
-        onClose={() => setSelectedBill(null)}
-        footer={
-          <div className="flex justify-between w-full">
-            <div className="flex gap-2">
-              <button
-                className="px-4 py-2 rounded border border-blue-500 text-blue-600 hover:bg-blue-50"
-                onClick={() => {
-                  console.log("selectedBill -->>", selectedBill);
-                  navigate(ROUTES?.EDITSALES, {
-                    state: { bill: selectedBill, companyId, companyName },
-                  });
-                  setSelectedBill(null);
-                }}
-              >
-                Edit
-              </button>
-              <button
-                className="px-4 py-2 rounded border border-red-500 text-red-600 hover:bg-red-50"
-                onClick={() => setConfirmDelete(true)}
-              >
-                Delete
-              </button>
-              {renderSingleBillPrint(selectedBill)}
-            </div>
+      {showDetailsModal && selectedBill && (
+        <Modal
+          title={`Bill #${
+            selectedBill.billNumber
+          } - ${companyName} (${getFinancialYear(selectedBill.billDate)})`}
+          type="info"
+          isOpen={showDetailsModal && selectedBill}
+          onClose={() => setSelectedBill(null)}
+          footer={
+            <div className="flex justify-between w-full">
+              <div className="flex gap-2">
+                <button
+                  className="px-4 py-2 rounded border border-blue-500 text-blue-600 hover:bg-blue-50"
+                  onClick={() => {
+                    navigate(ROUTES?.EDITSALES, {
+                      state: { bill: selectedBill, companyId, companyName },
+                    });
+                    setSelectedBill(null);
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  className="px-4 py-2 rounded border border-red-500 text-red-600 hover:bg-red-50"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  Delete
+                </button>
+                {renderSingleBillPrint(selectedBill)}
+              </div>
 
-            <div>
-              <button
-                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700"
-                onClick={() => setSelectedBill(null)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        }
-      >
-        {/* Content Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-          <p>
-            <span className="font-medium">Date:</span>{" "}
-            {formatDate(selectedBill.billDate)}
-          </p>
-          <p>
-            <span className="font-medium">Customer:</span>{" "}
-            {selectedBill.customerName}
-          </p>
-          <p>
-            <span className="font-medium">GSTIN:</span>{" "}
-            {selectedBill.customerGSTIN || "-"}
-          </p>
-          <p>
-            <span className="font-medium">Phone:</span>{" "}
-            {selectedBill.customerPhone || "-"}
-          </p>
-          <p>
-            <span className="font-medium">Status:</span>{" "}
-            {renderPaymentStatus(selectedBill.paymentStatus)}
-          </p>
-          <p className="sm:col-span-2">
-            <span className="font-medium">Comments:</span>{" "}
-            {selectedBill.comments || "-"}
-          </p>
-
-          {/* Bill Summary */}
-          <div className="sm:col-span-2 bg-gray-50 rounded-lg mt-2 shadow-sm">
-            <h3 className="text-base font-semibold mb-2">Bill Summary</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="font-medium">Sub Total:</span>
-                <span>{formatCurrency(selectedBill.totalBeforeTax)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Tax {getTaxType()}:</span>
-                <span>{formatCurrency(selectedBill.totalGST)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Round Up:</span>
-                <span>{formatCurrency(selectedBill.roundUp)}</span>
-              </div>
-              <div className="flex justify-between border-t py-2 bg-green-50 rounded text-green-800 font-semibold">
-                <span>Grand Total:</span>
-                <span>{formatCurrency(selectedBill.totalAmount)}</span>
+              <div>
+                <button
+                  className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700"
+                  onClick={() => setSelectedBill(null)}
+                >
+                  Close
+                </button>
               </div>
             </div>
-          </div>
-        </div>
+          }
+        >
+          {/* Content Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+            <p>
+              <span className="font-medium">Date:</span>{" "}
+              {formatDate(selectedBill.billDate)}
+            </p>
+            <p>
+              <span className="font-medium">Customer:</span>{" "}
+              {selectedBill.customerName}
+            </p>
+            <p>
+              <span className="font-medium">GSTIN:</span>{" "}
+              {selectedBill.customerGSTIN || "-"}
+            </p>
+            <p className="flex gap-2 items-center">
+              <p className="flex items-center gap-2">
+                <span className="font-medium">Status:</span>{" "}
+                {renderPaymentStatus(selectedBill.paymentStatus)}
+              </p>
+              <p>
+                <span className="font-medium">Currency:</span>{" "}
+                {renderPaymentStatus(selectedBill.currency)}
+              </p>
+            </p>
+            <p className="sm:col-span-2">
+              <span className="font-medium">Internal Comments:</span>{" "}
+              {selectedBill.internalComments || "-"}
+            </p>
+            <p className="sm:col-span-2">
+              <span className="font-medium">External Comments:</span>{" "}
+              {selectedBill.externalComments || "-"}
+            </p>
 
-        {/* Items Section */}
-        <div className="mt-4">
-          <h3 className="text-base font-semibold mb-2">Items</h3>
-
-          {/* Desktop Table */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="min-w-full border border-gray-200 text-sm">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="border px-3 py-2 text-left">#</th>
-                  <th className="border px-3 py-2 text-left">Description</th>
-                  <th className="border px-3 py-2 text-right">Qty</th>
-                  <th className="border px-3 py-2 text-right">Rate</th>
-                  <th className="border px-3 py-2 text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedBill.items?.map((item: any, idx: number) => (
-                  <tr key={idx}>
-                    <td className="border px-3 py-2">{idx + 1}</td>
-                    <td className="border px-3 py-2">{item.description}</td>
-                    <td className="border px-3 py-2 text-right">{item.qty}</td>
-                    <td className="border px-3 py-2 text-right">
-                      {formatCurrency(item.rate)}
-                    </td>
-                    <td className="border px-3 py-2 text-right">
-                      {formatCurrency(item.total)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile Accordion */}
-          <div className="sm:hidden space-y-2">
-            {selectedBill.items?.filter((i: any) => i?.description)?.map((item: any, idx: number) => (
-              <details
-                key={idx}
-                className="border rounded-lg p-3 shadow-sm bg-white"
-              >
-                <summary className="font-medium cursor-pointer">
-                  {idx + 1}. {item.description}
-                </summary>
-                <div className="mt-2 text-sm space-y-1">
-                  <p>
-                    <span className="font-medium">Qty:</span> {item.qty}
-                  </p>
-                  <p>
-                    <span className="font-medium">Rate:</span>{" "}
-                    {formatCurrency(item.rate)}
-                  </p>
-                  <p>
-                    <span className="font-medium">Total:</span>{" "}
-                    {formatCurrency(item.qty * item.rate)}
-                  </p>
+            {/* Bill Summary */}
+            <div className="sm:col-span-2 bg-gray-50 rounded-lg mt-2 shadow-sm">
+              <h3 className="text-base font-semibold mb-2">Bill Summary</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="font-medium">Sub Total:</span>
+                  <span>{formatCurrency(selectedBill.totalBeforeTax)}</span>
                 </div>
-              </details>
-            ))}
+                <div className="flex justify-between">
+                  <span className="font-medium">Tax {getTaxType()}:</span>
+                  <span>{formatCurrency(selectedBill.totalGST)}</span>
+                </div>
+                {selectedBill.roundUp ? (
+                  <div className="flex justify-between">
+                    <span className="font-medium">Round Up:</span>
+                    <span>{formatCurrency(selectedBill.roundUp)}</span>
+                  </div>
+                ) : null}
+                <div className="flex justify-between border-t py-2 bg-green-50 rounded text-green-800 font-semibold">
+                  <span>Grand Total:</span>
+                  <span>{`${formatCurrency(selectedBill.totalAmount)} (${
+                    selectedBill?.currency
+                  })`}</span>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </Modal>}
+
+          {/* Items Section */}
+          <div className="mt-4">
+            <h3 className="text-base font-semibold mb-2">Items</h3>
+
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="min-w-full border border-gray-200 text-sm">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="border px-3 py-2 text-left">#</th>
+                    <th className="border px-3 py-2 text-left">Description</th>
+                    <th className="border px-3 py-2 text-right">Qty</th>
+                    <th className="border px-3 py-2 text-right">Rate</th>
+                    <th className="border px-3 py-2 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedBill.items?.map((item: any, idx: number) => (
+                    <tr key={idx}>
+                      <td className="border px-3 py-2">
+                        {item?.qty && item?.rate ? idx + 1 : ""}
+                      </td>
+                      <td
+                        className={`border px-3 py-2 ${
+                          !item?.qty && !item?.rate ? "italic py-0" : ""
+                        }`}
+                      >
+                        {item.description}
+                      </td>
+                      <td className="border px-3 py-2 text-right">
+                        {item.qty ? Number(item.qty) : ""}
+                      </td>
+                      <td className="border px-3 py-2 text-right">
+                        {item.rate ? formatCurrency(item.rate) : ""}
+                      </td>
+                      <td className="border px-3 py-2 text-right">
+                        {item.qty && item.rate
+                          ? formatCurrency(Number(item.qty) * Number(item.rate))
+                          : ""}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Accordion */}
+            <div className="sm:hidden space-y-2">
+              {selectedBill.items
+                ?.filter((i: any) => i?.description)
+                ?.map((item: any, idx: number) => (
+                  <details
+                    key={idx}
+                    className="border rounded-lg p-3 shadow-sm bg-white"
+                  >
+                    <summary className="font-medium cursor-pointer">
+                      {idx + 1}. {item.description}
+                    </summary>
+                    <div className="mt-2 text-sm space-y-1">
+                      <p>
+                        <span className="font-medium">Qty:</span> {item.qty}
+                      </p>
+                      <p>
+                        <span className="font-medium">Rate:</span>{" "}
+                        {formatCurrency(item.rate)}
+                      </p>
+                      <p>
+                        <span className="font-medium">Total:</span>{" "}
+                        {formatCurrency(item.qty * item.rate)}
+                      </p>
+                    </div>
+                  </details>
+                ))}
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {confirmDelete && (
         <DeleteSalesBillModal
@@ -504,6 +550,12 @@ export default function SalesList() {
           setConfirmDelete={setConfirmDelete}
         />
       )}
+      {/* 
+      {sales?.length && (
+        <PDFViewer height={"200%"} width={"100%"}>
+          <SingleBillPDF bill={sales[0]} />
+        </PDFViewer>
+      )} */}
     </div>
   );
 }
