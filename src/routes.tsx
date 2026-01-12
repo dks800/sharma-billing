@@ -18,6 +18,10 @@ import { ROUTES } from "./constants";
 import AddPurchaseBillForm from "./components/invoices/AddPurchaseBillForm";
 import EditPurchaseBillForm from "./components/invoices/EditPurchaseBillForm";
 import { PageNotFound } from "./components/common/PageNotFound";
+import QuotationList from "./pages/QuotationList";
+import AddQuotationForm from "./components/quotations/AddQuotationForm";
+import EditQuotationForm from "./components/quotations/EditQuotationForm";
+import LetterpadList from "./pages/LetterPadList";
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const [user, loading] = useAuthState(auth);
@@ -52,6 +56,10 @@ export default function AppRoutes() {
           <Route path={ROUTES?.CUSTOMERS} element={<CustomerListPage />} />
           <Route path={ROUTES?.SALES} element={<SalesList />} />
           <Route path={ROUTES?.PURCHASE} element={<PurchaseList />} />
+          <Route path={ROUTES?.QUOTATIONS} element={<QuotationList />} />
+          <Route path={ROUTES?.ADDQUOTE} element={<AddQuotationForm />} />
+          <Route path={ROUTES?.EDITQUOTE} element={<EditQuotationForm />} />
+          <Route path={ROUTES?.LETTERPADS} element={<LetterpadList />} />
           <Route
             path={ROUTES?.SELECTCOMPANYSALES}
             element={<CompanySelectorPage redirectTo="sales" />}
@@ -63,6 +71,10 @@ export default function AppRoutes() {
           <Route
             path={ROUTES?.SELECTCOMPANYQUOTE}
             element={<CompanySelectorPage redirectTo="quotations" />}
+          />
+          <Route
+            path={ROUTES?.SELECTCOMPANYLETTERPADS}
+            element={<CompanySelectorPage redirectTo="letterpads" />}
           />
           <Route path={ROUTES?.ADDSALES} element={<AddSalesBillForm />} />
           <Route path={ROUTES?.EDITSALES} element={<EditSalesBillForm />} />

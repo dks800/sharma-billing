@@ -6,7 +6,6 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
 
-  // Handle Firebase auth state
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setUser(user);
@@ -14,7 +13,6 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // Splash screen fade-out control
   useEffect(() => {
     const timer1 = setTimeout(() => setFadeOut(true), 1800); // start fading before removal
     const timer2 = setTimeout(() => setShowSplash(false), 2300); // remove splash completely

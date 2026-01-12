@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import AddCustomerForm from "../components/customer/AddCustomerForm";
 import { useClients } from "../hooks/useClients";
-import { FiPlus, FiEdit2, FiTrash2, FiDownload } from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiDownload, FiEdit } from "react-icons/fi";
 import Modal from "../components/common/Modal";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
@@ -261,19 +261,21 @@ export default function CustomerListPage() {
                       <td className="p-2">{client.taxType || "-"}</td>
                       <td className="p-2 flex space-x-2">
                         <button
-                          className="text-blue-500 hover:underline flex items-center"
+                          title="Edit"
+                          className="text-blue-500 hover:underline hover:bg-blue-500 hover:text-white rounded px-1 py-1 pt-0"
                           onClick={() => {
                             setEditingClient(client);
                             setIsModalOpen(true);
                           }}
                         >
-                          <FiEdit2 className="mr-1" /> Edit
+                          <FiEdit className="inline" />
                         </button>
                         <button
-                          className="text-red-500 hover:underline flex items-center"
+                          title="Delete"
+                          className="text-red-500 hover:underline hover:bg-red-500 hover:text-white rounded px-1 py-1 pt-0"
                           onClick={() => setConfirmDelete(client)}
                         >
-                          <FiTrash2 className="mr-1" /> Delete
+                          <FiTrash2 className="inline" />
                         </button>
                       </td>
                     </tr>
@@ -284,7 +286,7 @@ export default function CustomerListPage() {
 
             {/* Mobile: Card Layout */}
             <div className="grid gap-4 md:hidden">
-              {paginatedClients.map((client, idx) => (
+              {paginatedClients.map((client) => (
                 <div
                   key={client.id}
                   className="bg-white p-4 rounded-lg shadow border"

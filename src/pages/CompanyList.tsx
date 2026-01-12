@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import AddCompanyForm from "../components/companies/AddCompanyForm";
-import { FiPlus, FiEdit2, FiTrash2, FiDownload } from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiDownload, FiEdit } from "react-icons/fi";
 import Modal from "../components/common/Modal";
 import { useCompanies } from "../hooks/useCompanies";
 import { db } from "../firebase";
@@ -33,6 +33,8 @@ export interface TypeCompany {
   lutArn?: string;
   ieCode?: string;
   bankAccounts?: BankAccount[];
+  manufacturerDetails: string;
+  otherFirms: string;
 }
 
 export default function CompanyList() {
@@ -106,6 +108,27 @@ export default function CompanyList() {
     </div>
   );
 
+  const renderCompanyDetails = (detailCompany: TypeCompany) => {
+    const data = [
+      { label: "GSTIN", value: detailCompany?.gstin || "-" },
+      { label: "MSME", value: detailCompany?.msme || "-" },
+      { label: "Owner", value: detailCompany?.owner || "-" },
+      { label: "Contact", value: detailCompany?.contactNumber || "-" },
+      { label: "Email", value: detailCompany?.email || "-" },
+      { label: "Web", value: detailCompany?.website || "-" },
+      { label: "Address", value: detailCompany?.address || "-" },
+      {
+        label: "Manufacturer Details",
+        value: detailCompany.manufacturerDetails || "-",
+      },
+    ];
+    return data.map((item) => (
+      <p key={item.label}>
+        <strong>{item.label}:</strong> {item.value}
+      </p>
+    ));
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between gap-3 sm:items-center">
@@ -151,6 +174,7 @@ export default function CompanyList() {
 
       {showFormModal && (
         <Modal
+          size="lg"
           isOpen={showFormModal}
           onClose={() => setShowFormModal(false)}
           title={editCompany ? "Edit Company" : "Add Company"}
@@ -179,26 +203,7 @@ export default function CompanyList() {
           onClose={() => setDetailCompany(null)}
           title={`Company Details: ${detailCompany.name}`}
         >
-          <div className="space-y-3">
-            <p>
-              <strong>GSTIN:</strong> {detailCompany.gstin || "-"}
-            </p>
-            <p>
-              <strong>MSME:</strong> {detailCompany.msme || "-"}
-            </p>
-            <p>
-              <strong>Owner:</strong> {detailCompany.owner || "-"}
-            </p>
-            <p>
-              <strong>Contact:</strong> {detailCompany.contactNumber || "-"}
-            </p>
-            <p>
-              <strong>Email:</strong> {detailCompany.email || "-"}
-            </p>
-            <p>
-              <strong>Address:</strong> {detailCompany.address || "-"}
-            </p>
-          </div>
+          <div className="space-y-3">{renderCompanyDetails(detailCompany)}</div>
         </Modal>
       )}
 
@@ -264,19 +269,21 @@ export default function CompanyList() {
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
-                          className="text-blue-500 hover:underline flex items-center"
+                          title="Edit"
+                          className="text-blue-500 hover:underline hover:bg-blue-500 hover:text-white rounded px-1 py-1 pt-0"
                           onClick={() => {
                             setEditCompany(company);
                             setShowFormModal(true);
                           }}
                         >
-                          <FiEdit2 className="mr-1" /> Edit
+                          <FiEdit className="inline" />
                         </button>
                         <button
-                          className="text-red-500 hover:underline flex items-center"
+                          title="Delete"
+                          className="text-red-500 hover:underline hover:bg-red-500 hover:text-white rounded px-1 py-1 pt-0"
                           onClick={() => setConfirmDelete(company)}
                         >
-                          <FiTrash2 className="mr-1" /> Delete
+                          <FiTrash2 className="inline" />
                         </button>
                       </td>
                     </tr>

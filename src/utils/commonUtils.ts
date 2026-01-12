@@ -1,3 +1,15 @@
+import HQTLogo from "../images/HQTLogo.png";
+import DevLogo from "../images/DEVLogo.png";
+import SLELogo from "../images/SLELogo.png";
+import SSBLogo from "../images/SSBLogo.png";
+import SLEWatermark from "../images/SLEWatermark.png";
+import SSBWatermark from "../images/SSBWatermark.png";
+import HQTStamp from "../images/HQTStamp.png";
+import DevStamp from "../images/DevStamp.png";
+import SSBStamp from "../images/SSBStamp.png";
+import SLEStamp from "../images/SLEStamp.png";
+
+
 export function numberToWords(num: number, currency = "Rupees"): string {
   if (num === 0) return `Zero ${currency} Only`;
 
@@ -107,4 +119,34 @@ export function formatDate(dateStr: string | Date): string {
 export const formatFinYear = (input: string) => {
   if (!input) return "";
   return input?.replace(/(\d{2})(\d{2})\D+(\d{2})(\d{2})/, "$2-$4");
+};
+
+export const getCompanyLogo = (companyId: string) => {
+  const logoMap: Record<string, string> = {
+    "24AWKPS0186R1ZQ": HQTLogo,
+    "24BFYPS0683D1Z1": DevLogo,
+    "24HXBPS0898M1ZP": SSBLogo,
+    "24GHHPS2424G1ZC": SLELogo,
+  };
+  return logoMap[companyId || ""] || "";
+};
+
+export const getCompanyWatermark = (companyId: string) => {
+  const watermarkMap: Record<string, string> = {
+    "24AWKPS0186R1ZQ": HQTLogo,
+    "24BFYPS0683D1Z1": DevLogo,
+    "24HXBPS0898M1ZP": SSBWatermark,
+    "24GHHPS2424G1ZC": SLEWatermark,
+  };
+  return watermarkMap[companyId || ""] || "";
+};
+
+export const getCompanyStamp = (companyId: string) => {
+  const companyMap: Record<string, string> = {
+    "24AWKPS0186R1ZQ": HQTStamp,
+    "24BFYPS0683D1Z1": DevStamp,
+    "24HXBPS0898M1ZP": SSBStamp,
+    "24GHHPS2424G1ZC": SLEStamp,
+  };
+  return companyMap[companyId || ""] || "";
 };

@@ -15,6 +15,7 @@ import {
   QueryDocumentSnapshot,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import { toast } from "react-toastify";
 
 export interface QueryOptions {
   limit?: number;
@@ -63,7 +64,6 @@ export function useFirestoreCollection(
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        // Map data without docSnapshot in each item
         const docsData = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
@@ -71,7 +71,6 @@ export function useFirestoreCollection(
 
         setData(docsData);
 
-        // Set lastDoc snapshot separately
         if (snapshot.docs.length > 0) {
           setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
         } else {
@@ -95,12 +94,13 @@ export function useFirestoreCollection(
     options.startAfterDoc,
   ]);
 
-  // CRUD functions
   const addItem = async (item: any) => {
     try {
-      await addDoc(collection(db, collectionName), item);
+      const docRef = await addDoc(collection(db, collectionName), item);
+      return docRef.id;
     } catch (err) {
       setError(err as Error);
+      throw err;
     }
   };
 
@@ -117,8 +117,10 @@ export function useFirestoreCollection(
     try {
       const docRef = doc(db, collectionName, id);
       await deleteDoc(docRef);
+      toast.success("Item deleted successfully!!");
     } catch (err) {
       setError(err as Error);
+      toast.error("Failed to delete item!!");
     }
   };
 

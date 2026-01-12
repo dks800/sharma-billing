@@ -9,30 +9,24 @@ import {
 import { db } from "../firebase";
 import { COLLECTIONS } from "../constants";
 
-export async function getNextBillNumber(companyId: string) {
-  const fy = getFinancialYear(); // returns "2025-2026"
+export async function getNextBillNumber(companyId: string, identifier: string, collectionName: string) {
+  const fy = getFinancialYear();
   const ref = collection(
     db,
-    `${COLLECTIONS.INVOICES}/${companyId}/${COLLECTIONS.SALES_BILL}`
+    `${COLLECTIONS.INVOICES}/${companyId}/${[collectionName]}`
   );
   const q = query(
     ref,
-    where("financialYear", "==", fy), // <-- fixed here
-    orderBy("billNumber", "desc"),
+    where("financialYear", "==", fy),
+    orderBy(identifier, "desc"),
     limit(1)
   );
   const snapshot = await getDocs(q);
   if (!snapshot.empty) {
-    const billNumber = snapshot.docs[0].data().billNumber;
+    const billNumber = snapshot.docs[0].data()?.[identifier];
     return !isNaN(Number(billNumber)) ? String(Number(billNumber) + 1) : "1";
   }
   return "1";
-}
-
-function getFinancialYearStart() {
-  const now = new Date();
-  const year = now.getMonth() < 3 ? now.getFullYear() - 1 : now.getFullYear();
-  return `${year}-04-01`;
 }
 
 export function getFinancialYear(date = new Date()): string {

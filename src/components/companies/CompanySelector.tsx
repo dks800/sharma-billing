@@ -1,4 +1,3 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useCompanies } from "../../hooks/useCompanies";
 import Loader from "../Loader";
@@ -7,7 +6,7 @@ import { ROUTES } from "../../constants";
 export default function CompanySelectorPage({
   redirectTo,
 }: {
-  redirectTo: "sales" | "purchase" | "quotations";
+  redirectTo: "sales" | "purchase" | "quotations" | "letterpads";
 }) {
   const navigate = useNavigate();
   const { data: companies, loading, error } = useCompanies();

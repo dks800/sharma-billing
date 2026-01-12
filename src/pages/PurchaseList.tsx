@@ -1,23 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { useLocation, useNavigate } from "react-router-dom";
 import { usePurchaseBill } from "../hooks/useInvoices";
 import { toast } from "react-toastify";
 import { formatCurrency, formatDate } from "../utils/commonUtils";
 import { PAYMENT_STATUSES, ROUTES } from "../constants";
 import Modal from "../components/common/Modal";
-import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
-import { FiDownload, FiEye, FiEyeOff, FiSettings } from "react-icons/fi";
-import { BsFillEyeSlashFill, BsFillPlusCircleFill } from "react-icons/bs";
+import {
+  FiEdit,
+  FiEye,
+  FiEyeOff,
+  FiTrash2,
+} from "react-icons/fi";
+import { BsFillPlusCircleFill } from "react-icons/bs";
 import renderPaymentStatus from "../components/invoices/getPaymentStatus";
 import { useClients } from "../hooks/useClients";
 import CustomerDropdown, {
   Client,
 } from "../components/customer/CustomerDropdown";
-import { RiFileSettingsFill } from "react-icons/ri";
-import { AiFillEyeInvisible } from "react-icons/ai";
 import Loader from "../components/Loader";
-import PurchaseListPDF from "../components/invoices/PurchaseListPDF";
 import EmptyState from "../components/common/EmptyState";
 
 interface PurchaseBill {
@@ -41,8 +41,6 @@ const PurchaseList = () => {
   const [loading, setLoading] = useState(false);
   const [orderByField, setOrderByField] = useState("billNumber");
   const [orderDirection, setOrderDirection] = useState<"asc" | "desc">("desc");
-  const [limit, setLimit] = useState(50); // fetching bigger chunk, paginate client-side
-
   const [selectedBill, setSelectedBill] = useState<PurchaseBill | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -66,12 +64,10 @@ const PurchaseList = () => {
   const {
     data: purchaseBills,
     loading: loadingBills,
-    error,
     deleteItem,
   } = usePurchaseBill(companyId || "", {
     orderByField,
     orderDirection,
-    limit,
   });
 
   const filteredBills = React.useMemo(() => {
@@ -191,7 +187,34 @@ const PurchaseList = () => {
       </div>
     </div>
   );
-
+  const renderBillAggregates = () => {
+    const amount = filteredBills.reduce(
+      (a, { totalAmount }) => a + Number(totalAmount),
+      0
+    );
+    return (
+      <div className="mt-4 flex justify-center w-full px-4 pb-4">
+        <div className="flex gap-2 bg-gray-50 border rounded px-4 w-full max-w-md justify-between">
+          <div className="text-right">
+            <p className="text-sm text-gray-600">
+              Total Bills:{" "}
+              <span className="text-lg font-semibold text-blue-600">
+                {filteredBills?.length}
+              </span>
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-600">
+              Total Amount:{" "}
+              <span className="text-lg font-bold text-green-600">
+                {formatCurrency(amount)}
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  };
   return (
     <div className="p-4">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-3">
@@ -200,7 +223,7 @@ const PurchaseList = () => {
         </h2>
         <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 w-full sm:w-auto">
           <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-end">
-            {!loading && filteredBills?.length ? (
+            {/* {!loading && filteredBills?.length ? (
               <PDFDownloadLink
                 document={
                   <PurchaseListPDF
@@ -224,7 +247,7 @@ const PurchaseList = () => {
                   </button>
                 )}
               </PDFDownloadLink>
-            ) : null}
+            ) : null} */}
 
             <button
               className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center justify-center gap-2 w-[48%] sm:w-auto"
@@ -246,9 +269,6 @@ const PurchaseList = () => {
           </div>
         </div>
       </div>
-      {/* {filteredBills && <PDFViewer style={{ width: "100%", height: "100vh" }}>
-        <PurchaseListPDF billList={filteredBills} companyName={companyName} />
-      </PDFViewer>} */}
       <div
         className={`${
           !showFilters ? "hidden" : ""
@@ -272,10 +292,12 @@ const PurchaseList = () => {
         />
       ) : (
         <div className="hidden sm:block overflow-x-auto bg-white rounded shadow">
+          {renderBillAggregates()}
           <table className="min-w-full border">
             <thead className="bg-gray-100">
               <tr>
                 {[
+                  { label: "Sr", field: "SrNo" },
                   { label: "Bill No", field: "billNumber" },
                   { label: "Date", field: "date" },
                   { label: "Supplier", field: "SupplierName" },
@@ -296,7 +318,7 @@ const PurchaseList = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredBills.map((bill) => (
+              {filteredBills.map((bill, index) => (
                 <tr
                   key={bill.id}
                   className="border-t hover:bg-gray-50 cursor-pointer"
@@ -305,6 +327,7 @@ const PurchaseList = () => {
                     setSelectedBill(bill);
                   }}
                 >
+                  <td className="px-4 py-2 w-[30px]">{index + 1}</td>
                   <td className="px-4 py-2">{bill.billNumber}</td>
                   <td className="px-4 py-2">{formatDate(bill.billDate)}</td>
                   <td className="px-4 py-2">{bill.supplierName}</td>
@@ -314,9 +337,10 @@ const PurchaseList = () => {
                   <td className="px-4 py-2">
                     {renderPaymentStatus(bill.paymentStatus)}
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-2 space-x-2">
                     <button
-                      className="px-2 py-1 text-blue-600 hover:underline"
+                      title="Edit"
+                      className="text-blue-500 hover:underline hover:bg-blue-500 hover:text-white rounded px-1 py-1 pt-0"
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(ROUTES.EDITPURCHASE, {
@@ -324,23 +348,25 @@ const PurchaseList = () => {
                         });
                       }}
                     >
-                      Edit
+                      <FiEdit className="inline" />
                     </button>
                     <button
-                      className="px-2 py-1 text-red-600 hover:underline"
+                      title="Delete"
+                      className="text-red-500 hover:underline hover:bg-red-500 hover:text-white rounded px-1 py-1 pt-0"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedBill(bill);
                         setConfirmDelete(true);
                       }}
                     >
-                      Delete
+                      <FiTrash2 className="inline" />
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {filteredBills?.length > 10 ? renderBillAggregates() : null}
         </div>
       )}
 

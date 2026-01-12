@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSalesBill } from "../hooks/useInvoices";
 import Loader from "../components/Loader";
-import { FiDownload, FiPrinter } from "react-icons/fi";
+import { FiDownload, FiEdit, FiPrinter, FiTrash2 } from "react-icons/fi";
 import {
   formatCurrency,
   formatDate,
@@ -12,7 +12,7 @@ import renderPaymentStatus from "../components/invoices/getPaymentStatus";
 import Modal from "../components/common/Modal";
 import DeleteSalesBillModal from "../components/invoices/DeleteSalesBillModal";
 import { ROUTES } from "../constants";
-import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
+import { PDFDownloadLink } from "@react-pdf/renderer";
 import SalesListPDF from "../components/invoices/SalesListPDF";
 import { toast } from "react-toastify";
 import SingleBillPDF from "../components/invoices/SingleBillPDF";
@@ -34,7 +34,6 @@ export default function SalesList() {
   const [search, setSearch] = useState("");
   const [orderByField, setOrderByField] = useState("billNumber");
   const [orderDirection, setOrderDirection] = useState<"asc" | "desc">("desc");
-  const [limit, setLimit] = useState(50); // fetching bigger chunk, paginate client-side
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
   const {
@@ -45,7 +44,6 @@ export default function SalesList() {
   } = useSalesBill(companyId || "", {
     orderByField,
     orderDirection,
-    limit,
   });
 
   const [selectedBill, setSelectedBill] = useState<any | null>(null);
@@ -80,8 +78,13 @@ export default function SalesList() {
 
   const paginatedSales = useMemo(() => {
     const start = (currentPage - 1) * rowsPerPage;
-    return filteredSales.slice(start, start + rowsPerPage);
-  }, [filteredSales, currentPage]);
+
+    const sortedSales = [...filteredSales].sort((a, b) => {
+      return Number(b.billNumber) - Number(a.billNumber); // DESC
+    });
+
+    return sortedSales.slice(start, start + rowsPerPage);
+  }, [filteredSales, currentPage, rowsPerPage]);
 
   const totalPages = Math.ceil(filteredSales.length / rowsPerPage);
 
@@ -210,7 +213,7 @@ export default function SalesList() {
         <Loader />
       ) : error ? (
         <p className="text-red-500">Error: {error.message}</p>
-      ) : filteredSales.length === 0 ? (
+      ) : paginatedSales?.length === 0 ? (
         <EmptyState
           title="No sales bills found"
           ctaLabel={"+ Sales Bill"}
@@ -220,7 +223,6 @@ export default function SalesList() {
         />
       ) : (
         <>
-          {/* Desktop table */}
           <div className="hidden sm:block overflow-x-auto bg-white rounded shadow">
             <table className="min-w-full border">
               <thead className="bg-gray-100">
@@ -250,7 +252,7 @@ export default function SalesList() {
                 </tr>
               </thead>
               <tbody>
-                {paginatedSales.map((bill) => (
+                {paginatedSales?.map((bill) => (
                   <tr
                     key={bill.id}
                     className="border-t hover:bg-gray-50 cursor-pointer"
@@ -277,7 +279,8 @@ export default function SalesList() {
                     </td>
                     <td className="px-4 py-2 space-x-2">
                       <button
-                        className="text-blue-500 hover:underline"
+                        title="Edit"
+                        className="text-blue-500 hover:underline hover:bg-blue-500 hover:text-white rounded px-1 py-1 pt-0"
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(ROUTES?.EDITSALES, {
@@ -285,10 +288,11 @@ export default function SalesList() {
                           });
                         }}
                       >
-                        Edit
+                        <FiEdit className="inline" />
                       </button>
                       <button
-                        className="text-red-500 hover:underline"
+                        title="Delete"
+                        className="text-red-500 hover:underline hover:bg-red-500 hover:text-white rounded px-1 py-1 pt-0"
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
@@ -297,8 +301,25 @@ export default function SalesList() {
                           setConfirmDelete(true);
                         }}
                       >
-                        Delete
+                        <FiTrash2 className="inline" />
                       </button>
+                      {/* <button
+                        title="Copy"
+                        className="text-amber-500 hover:underline hover:bg-amber-500 hover:text-white rounded px-1 py-1 pt-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          navigate(ROUTES?.ADDQUOTE, {
+                            state: {
+                              copyFrom: bill,
+                              companyId,
+                              companyName,
+                            },
+                          });
+                        }}
+                      >
+                        <FiCopy className="inline" />
+                      </button> */}
                     </td>
                   </tr>
                 ))}
@@ -422,11 +443,16 @@ export default function SalesList() {
                 <span className="font-medium">Status:</span>{" "}
                 {renderPaymentStatus(selectedBill.paymentStatus)}
               </p>
-              <p>
-                <span className="font-medium">Currency:</span>{" "}
-                {renderPaymentStatus(selectedBill.currency)}
-              </p>
             </p>
+            <p>
+              <span className="font-medium">Currency:</span>{" "}
+              {renderPaymentStatus(selectedBill.currency)}
+            </p>
+            <p>
+              <span className="font-medium">Eway Bill:</span>{" "}
+              {selectedBill.ewayBillNo}
+            </p>
+
             <p className="sm:col-span-2">
               <span className="font-medium">Internal Comments:</span>{" "}
               {selectedBill.internalComments || "-"}
@@ -550,12 +576,6 @@ export default function SalesList() {
           setConfirmDelete={setConfirmDelete}
         />
       )}
-      {/* 
-      {sales?.length && (
-        <PDFViewer height={"200%"} width={"100%"}>
-          <SingleBillPDF bill={sales[0]} />
-        </PDFViewer>
-      )} */}
     </div>
   );
 }

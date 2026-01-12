@@ -28,17 +28,30 @@ interface Props {
 }
 
 const SalesListPDF: React.FC<Props> = ({ billList }) => {
+  if (!billList || billList.length === 0) {
+    return (
+      <Document>
+        <Page size="A4" style={styles.page}>
+          <Text style={styles.title}>No Bills Available</Text>
+        </Page>
+      </Document>
+    );
+  }
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>Sales Bill List ({billList?.[0]?.companyName})</Text>
+        <Text style={styles.title}>
+          Sales Bill List ({billList?.[0]?.companyName})
+        </Text>
         <View style={styles.table}>
           <View style={styles.row}>
             <Text style={[styles.col, styles.colSr, styles.header]}>Sr</Text>
             <Text style={[styles.col, styles.colBill, styles.header]}>
               Bill No
             </Text>
-            <Text style={[styles.col, styles.colDate, styles.header]}>Date</Text>
+            <Text style={[styles.col, styles.colDate, styles.header]}>
+              Date
+            </Text>
             <Text style={[styles.col, styles.colClientName, styles.header]}>
               Client
             </Text>

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, signInWithGoogle } from "../firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -11,7 +11,6 @@ export default function Login() {
 
   useEffect(() => {
     if (!loading && user) {
-      // User is logged in, redirect to dashboard
       navigate(ROUTES?.DASHBOARD, { replace: true });
     }
   }, [user, loading, navigate]);

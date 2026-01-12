@@ -3,18 +3,15 @@ import { Page, Text, View, Document, Image } from "@react-pdf/renderer";
 import {
   formatCurrency,
   formatDate,
+  getCompanyLogo,
+  getCompanyStamp,
+  getCompanyWatermark,
   numberToWords,
 } from "../../utils/commonUtils";
 import { useCompanyById } from "../../hooks/useCompanyById";
 import { useClientById } from "../../hooks/useClientById";
-import HQTStamp from "../../images/HQTStamp.png";
-import DevStamp from "../../images/DevStamp.png";
-import SSBStamp from "../../images/SSBStamp.png";
-import SLEStamp from "../../images/SLEStamp.png";
 import Heart from "../../images/heart.png";
 import Murly from "../../images/MurlyLogo.png";
-import HQTWatermark from "../../images/HQTLogo.png";
-import DevWatermark from "../../images/DEVLogo.png";
 import { Client, Company, SalesBill } from "../../types/bills";
 import { getStyles } from "./singleBillPdfStyles";
 import { globalCurrencies } from "../../constants";
@@ -32,6 +29,7 @@ const SingleBillPDF: React.FC<Props> = ({ bill }) => {
   const { company } = useCompanyById(bill?.companyId || "");
   const { client } = useClientById(bill?.customerGSTIN || "");
   const styles = getStyles(bill?.companyId || "");
+
   useEffect(() => {
     if (client && Object.keys(client).length > 0) setSelectedClient(client);
     if (company && Object.keys(company).length > 0) setSelectedCompany(company);
@@ -54,24 +52,6 @@ const SingleBillPDF: React.FC<Props> = ({ bill }) => {
       setBillData(_bill);
     }
   }, [bill]);
-
-  const getCompanyStamp = () => {
-    const companyMap: Record<string, string> = {
-      "24AWKPS0186R1ZQ": HQTStamp,
-      "24BFYPS0683D1Z1": DevStamp,
-      "24HXBPS0898M1ZP": SSBStamp,
-      "24GHHPS2424G1ZC": SLEStamp,
-    };
-    return companyMap[bill?.companyId || ""] || "";
-  };
-
-  const getCompanyWatermark = () => {
-    const watermarkMap: Record<string, string> = {
-      "24AWKPS0186R1ZQ": HQTWatermark,
-      "24BFYPS0683D1Z1": DevWatermark,
-    };
-    return watermarkMap[bill?.companyId || ""] || "";
-  };
 
   const getBankAccounts = () => {
     if (!selectedCompany?.bankAccounts?.length) return [];
@@ -139,7 +119,7 @@ const SingleBillPDF: React.FC<Props> = ({ bill }) => {
     <Document>
       <Page size="A4" style={styles.page}>
         <Image
-          src={getCompanyWatermark()}
+          src={getCompanyWatermark(bill?.companyId)}
           style={{
             position: "absolute",
             top: "35%",
@@ -151,9 +131,18 @@ const SingleBillPDF: React.FC<Props> = ({ bill }) => {
         />
 
         <View style={styles.pageBox}>
-          <Text style={[styles.title, styles?.brandLabel]}>
-            Tax Invoice ({bill?.financialYear})
-          </Text>
+          <View style={styles.headerRow}>
+            <View style={styles.spacer}>
+              <Image
+                src={getCompanyLogo(bill?.companyId)}
+                style={styles.companyLogo}
+              />
+            </View>
+            <Text style={styles.centerText}>
+              Tax Invoice ({bill?.financialYear})
+            </Text>
+            <Text style={styles.leftText}>#{bill?.billNumber}</Text>
+          </View>
 
           <View>
             <View style={styles.partyContainer}>
@@ -248,7 +237,7 @@ const SingleBillPDF: React.FC<Props> = ({ bill }) => {
                 { label: "Payment:", value: bill?.paymentStatus },
                 { label: "Dispatch By:", value: bill?.dispatchBy },
                 { label: "Eway Bill No:", value: bill?.ewayBillNo },
-                { label: "Date & Time:", value: bill?.ewayBillDate },
+                { label: "Date & Time:", value: bill?.ewayBillDateTime },
               ].map((item, idx, arr) => {
                 const isLastColumn = idx % 2 === 1;
                 const isLastRow = idx >= arr.length - 2;
@@ -379,14 +368,14 @@ const SingleBillPDF: React.FC<Props> = ({ bill }) => {
             </View>
 
             <View style={styles.statsRight}>
-              <Text style={styles.statRows}>
+              <Text style={[styles.statRows, { fontWeight: "bold" }]}>
                 {formatCurrency(bill?.totalBeforeTax)}
               </Text>
               {renderGSTStats(bill)}
               <Text style={styles.statRows}>
                 {formatCurrency(bill?.roundUp)}
               </Text>
-              <Text style={styles.statRows}>
+              <Text style={[styles.statRows, { fontWeight: "bold" }]}>
                 {formatCurrency(bill?.totalAmount)}
               </Text>
             </View>
@@ -429,7 +418,7 @@ const SingleBillPDF: React.FC<Props> = ({ bill }) => {
               flexDirection: "row",
               alignItems: "flex-end",
               justifyContent: "space-between",
-              marginTop: 10,
+              marginTop: 5,
             }}
           >
             <View style={{ fontSize: 7 }}>
@@ -456,7 +445,7 @@ const SingleBillPDF: React.FC<Props> = ({ bill }) => {
                   {selectedCompany?.name}
                 </Text>
               </Text>
-              <Image src={getCompanyStamp()} style={styles.logo} />
+              <Image src={getCompanyStamp(bill?.companyId)} style={styles.logo} />
               <Text>Authorised Signatory</Text>
             </View>
           </View>
@@ -468,7 +457,7 @@ const SingleBillPDF: React.FC<Props> = ({ bill }) => {
             style={{
               fontSize: 7,
               textAlign: "center",
-              marginTop: 10,
+              marginTop: 5,
             }}
           >
             This is a computer-generated invoice and does not require a physical

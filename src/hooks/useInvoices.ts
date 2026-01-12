@@ -1,13 +1,6 @@
+import { useMemo } from "react";
 import { COLLECTIONS } from "../constants";
 import { useFirestoreCollection } from "./useFirestoreCollection";
-
-export function useInvoices(companyId: string, options = {}) {
-  if (!companyId) return { data: [], loading: false, error: null };
-  return useFirestoreCollection(
-    `${COLLECTIONS.INVOICES}/${companyId}`,
-    options
-  );
-}
 
 const defaultReturn = {
   data: [] as any[],
@@ -19,18 +12,78 @@ const defaultReturn = {
   deleteItem: async () => {},
 };
 
+/* ---------------------- INVOICES ROOT ---------------------- */
+
+export function useInvoices(companyId: string, options = {}) {
+  const path = useMemo(() => {
+    return companyId ? `${COLLECTIONS.INVOICES}/${companyId}` : null;
+  }, [companyId]);
+
+  if (!path) return defaultReturn;
+
+  return useFirestoreCollection(path, options);
+}
+
+/* ---------------------- SALES BILL ---------------------- */
+
 export function useSalesBill(companyId: string, options = {}) {
-  if (!companyId) return defaultReturn;
+  const path = useMemo(() => {
+    return companyId
+      ? `${COLLECTIONS.INVOICES}/${companyId}/${COLLECTIONS.SALES_BILL}`
+      : null;
+  }, [companyId]);
+
+  if (!path) return defaultReturn;
+
+  return useFirestoreCollection(path, options);
+}
+
+/* ---------------------- PURCHASE BILL ---------------------- */
+
+export function usePurchaseBill(companyId: string, options = {}) {
+  const path = useMemo(() => {
+    return companyId
+      ? `${COLLECTIONS.INVOICES}/${companyId}/${COLLECTIONS.PURCHASE_BILL}`
+      : null;
+  }, [companyId]);
+
+  if (!path) return defaultReturn;
+
+  return useFirestoreCollection(path, options);
+}
+
+/* ---------------------- QUOTATIONS ---------------------- */
+
+export function useQuotations(companyId: string, options = {}) {
+  const path = useMemo(() => {
+    return companyId
+      ? `${COLLECTIONS.INVOICES}/${companyId}/${COLLECTIONS.QUOTATIONS}`
+      : null;
+  }, [companyId]);
+
+  if (!path) return defaultReturn;
+  
+  return useFirestoreCollection(path, options);
+}
+
+/* ---------------------- CLIENTS FOR QUOTATIONS ---------------------- */
+
+export function useClientsForQuotations() {
   return useFirestoreCollection(
-    `${COLLECTIONS.INVOICES}/${companyId}/${COLLECTIONS.SALES_BILL}`,
-    options
+    `${COLLECTIONS.INVOICES}/24AWKPS0186R1ZQ/${COLLECTIONS.CLIENTSFORQUOTATION}`
   );
 }
 
-export function usePurchaseBill(companyId: string, options = {}) {
-  if (!companyId) return defaultReturn;
-  return useFirestoreCollection(
-    `${COLLECTIONS.INVOICES}/${companyId}/${COLLECTIONS.PURCHASE_BILL}`,
-    options
-  );
+/* ---------------------- LETTER PAD ---------------------- */
+
+export function useLetterpads(companyId: string, options = {}) {
+  const path = useMemo(() => {
+    return companyId
+      ? `${COLLECTIONS.INVOICES}/${companyId}/${COLLECTIONS.LETTERPAD}`
+      : null;
+  }, [companyId]);
+
+  if (!path) return defaultReturn;
+
+  return useFirestoreCollection(path, options);
 }

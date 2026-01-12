@@ -29,6 +29,8 @@ export default function AddCompanyForm({
     ieCode: "",
     msme: "",
     bankAccounts: [] as BankAccount[],
+    manufacturerDetails: "",
+    otherFirms: "",
   });
 
   useEffect(() => {
@@ -46,6 +48,8 @@ export default function AddCompanyForm({
         ieCode: editCompany.ieCode || "",
         msme: editCompany.msme || "",
         bankAccounts: editCompany.bankAccounts || [],
+        manufacturerDetails: editCompany.manufacturerDetails || "",
+        otherFirms: editCompany.otherFirms || "",
       });
     }
   }, [editCompany]);
@@ -118,6 +122,8 @@ export default function AddCompanyForm({
         ieCode: "",
         msme: "",
         bankAccounts: [],
+        manufacturerDetails: "",
+        otherFirms: "",
       });
 
       onCompanyAdded();
@@ -130,7 +136,7 @@ export default function AddCompanyForm({
 
   return (
     <form onSubmit={handleSubmit} className="bg-white p-2 space-y-2">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 auto-rows-auto items-start">
         <input
           type="text"
           name="name"
@@ -218,6 +224,22 @@ export default function AddCompanyForm({
           name="msme"
           placeholder="MSME"
           value={formData.msme}
+          onChange={handleChange}
+          className="border p-2 w-full rounded"
+        />
+        <textarea
+          rows={4}
+          name="otherFirms"
+          placeholder="Other Firms"
+          value={formData.otherFirms}
+          onChange={handleChange}
+          className="border p-2 w-full rounded"
+        />
+        <textarea
+          rows={4}
+          name="manufacturerDetails"
+          placeholder="Manufacturer Details"
+          value={formData.manufacturerDetails}
           onChange={handleChange}
           className="border p-2 w-full rounded"
         />

@@ -5,9 +5,11 @@ export const COLLECTIONS = {
   SALES_BILL: "sales",
   PURCHASE_BILL: "purchase",
   QUOTATIONS: "quotations",
+  CLIENTSFORQUOTATION: "clientsForQuotation",
   PROFORMAS: "proformas",
   PURCHASEORDERS: "purchaseOrders",
   CHALLANS: "challans",
+  LETTERPAD: "letterPad",
 };
 export const GST_OPTIONS = [0, 2.5, 5, 9, 18, 28];
 export const UNIT_OPTIONS = [
@@ -26,8 +28,10 @@ export const ROUTES = {
   SELECTCOMPANYSALES: "/select-company-sales",
   SELECTCOMPANYPURCHASE: "/select-company-purchase",
   SELECTCOMPANYQUOTE: "/select-company-quotation",
+  SELECTCOMPANYLETTERPADS: "/select-company-letterpads",
   SALES: "/sales",
   PURCHASE: "/purchase",
+  QUOTATIONS: "/quotations",
   CUSTOMERS: "/customers",
   COMPANIES: "/companies",
   ADDSALES: "/add-sales",
@@ -36,6 +40,11 @@ export const ROUTES = {
   EDITPURCHASE: "/edit-purchase",
   ADDCUSTOMER: "/add-customer",
   EDITCUSTOMER: "/edit-customer",
+  ADDQUOTE: "/add-quote",
+  EDITQUOTE: "/edit-quote",
+  LETTERPADS: "/letterpads",
+  ADDLETTERPAD: "/add-letterpad",
+  EDITLETTERPAD: "/edit-letterpad",
 };
 
 export const PAYMENT_STATUSES = ["Pending", "Partial", "Paid"];

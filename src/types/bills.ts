@@ -6,6 +6,22 @@ export interface BillItem {
   hsnCode: string;
 }
 
+export interface Quotation {
+  title: string;
+  companyName: string;
+  companyId: string;
+  currency: string;
+  quoteNumber: string;
+  quoteDate: string;
+  validTill: string;
+  termsAndConditions: string;
+  subTitle: string;
+  delivery: string;
+  paymentTerms: string;
+  freight: string;
+  validity: string;
+}
+
 export interface SalesBill {
   id: string;
   billDate: string;
@@ -22,7 +38,7 @@ export interface SalesBill {
   locationFrom: string;
   locationTo: string;
   ewayBillNo: string;
-  ewayBillDate: string;
+  ewayBillDateTime: string;
   totalGST: string;
   externalComments: string;
   internalComments: string;
@@ -52,6 +68,8 @@ export interface Company {
   email: string;
   name: string;
   address: string;
+  manufacturerDetails: string;
+  otherFirms: string;
 }
 
 export interface Client {

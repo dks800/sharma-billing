@@ -24,7 +24,19 @@ interface Props {
   companyName?: string;
 }
 
-const PurchaseListPDF: React.FC<Props> = ({ billList = [], companyName = "" }) => {
+const PurchaseListPDF: React.FC<Props> = ({
+  billList = [],
+  companyName = "",
+}) => {
+  if (!billList || !Array.isArray(billList) || billList.length === 0) {
+    return (
+      <Document>
+        <Page size="A4" style={styles.page}>
+          <Text style={styles.title}>No Bills Available</Text>
+        </Page>
+      </Document>
+    );
+  }
   const safeBills = Array.isArray(billList) ? billList : [];
 
   return (
@@ -43,14 +55,24 @@ const PurchaseListPDF: React.FC<Props> = ({ billList = [], companyName = "" }) =
             {/* Header Row */}
             <View style={styles.row}>
               <Text style={[styles.col, styles.colSr, styles.header]}>Sr</Text>
-              <Text style={[styles.col, styles.colBill, styles.header]}>Bill No</Text>
-              <Text style={[styles.col, styles.colDate, styles.header]}>Date</Text>
+              <Text style={[styles.col, styles.colBill, styles.header]}>
+                Bill No
+              </Text>
+              <Text style={[styles.col, styles.colDate, styles.header]}>
+                Date
+              </Text>
               <Text style={[styles.col, styles.colSupplierName, styles.header]}>
                 Supplier Name
               </Text>
-              <Text style={[styles.col, styles.colNet, styles.header]}>Net</Text>
-              <Text style={[styles.col, styles.colGST, styles.header]}>GST</Text>
-              <Text style={[styles.col, styles.colTotal, styles.header]}>Total</Text>
+              <Text style={[styles.col, styles.colNet, styles.header]}>
+                Net
+              </Text>
+              <Text style={[styles.col, styles.colGST, styles.header]}>
+                GST
+              </Text>
+              <Text style={[styles.col, styles.colTotal, styles.header]}>
+                Total
+              </Text>
               <Text style={[styles.col, styles.colPayment, styles.header]}>
                 Payment
               </Text>
@@ -69,7 +91,9 @@ const PurchaseListPDF: React.FC<Props> = ({ billList = [], companyName = "" }) =
               return (
                 <View style={styles.row} key={c.id || idx}>
                   <Text style={[styles.col, styles.colSr]}>{idx + 1}</Text>
-                  <Text style={[styles.col, styles.colBill]}>{c?.billNumber || "-"}</Text>
+                  <Text style={[styles.col, styles.colBill]}>
+                    {c?.billNumber || "-"}
+                  </Text>
                   <Text style={[styles.col, styles.colDate]}>{billDate}</Text>
                   <Text style={[styles.col, styles.colSupplierName]}>
                     {c?.supplierName || "-"}

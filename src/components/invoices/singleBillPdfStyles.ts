@@ -2,10 +2,9 @@ import { StyleSheet } from "@react-pdf/renderer";
 
 export const getStyles = (companyId: string) => {
   const brandColor =
-    companyId === "24BFYPS0683D1Z1"
-      ? "#DD2222" // Hindustan Quartz Technology
-      : companyId === "24AWKPS0186R1ZQ"
-      ? "#0033CC" // Dev Engineering (example)
+    companyId === "24BFYPS0683D1Z1" ? "#D62B26" // dev
+      : companyId === "24AWKPS0186R1ZQ" ? "#0033CC" // hqt
+      : companyId === "24HXBPS0898M1ZP" ? "#597515" // ssb
       : "#000000"; // default black
 
   return StyleSheet.create({
@@ -14,13 +13,35 @@ export const getStyles = (companyId: string) => {
       fontSize: 9,
       fontFamily: "Helvetica",
     },
+    headerRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      width: "100%",
+      marginBottom: 6,
+    },
+    leftText: {
+      color: "gray",
+      opacity: 0.8,
+      fontSize: 25,
+      fontWeight: "bold",
+      flex: 1,
+      textAlign: "right",
+    },
+    centerText: {
+      fontSize: 14,
+      fontWeight: "bold",
+      flex: 1,
+      textAlign: "center",
+    },
+    // optional tweak if you want perfect horizontal centering regardless of left text width
+    spacer: {
+      flex: 1,
+    },
     pageBox: {
       flex: 1,
       padding: 20,
       paddingTop: 10,
-      // borderWidth: 0.6,
-      // borderStyle: "solid",
-      // borderColor: "#000",
     },
     title: {
       fontSize: 14,
@@ -84,7 +105,7 @@ export const getStyles = (companyId: string) => {
       paddingLeft: 4,
     },
     colHSN: {
-      flex: 0.6,
+      flex: 0.7,
       textAlign: "center",
     },
     colQty: {
@@ -133,6 +154,7 @@ export const getStyles = (companyId: string) => {
     },
     italics: {
       fontStyle: "italic",
+      color: "gray",
     },
     exempted: {
       fontSize: 8.5,
@@ -191,6 +213,11 @@ export const getStyles = (companyId: string) => {
       fontWeight: "bold",
       color: brandColor,
       textTransform: "uppercase",
+    },
+    companyLogo: {
+      width: 30,
+      // height: 30,
+      // objectFit: "contain",
     },
     logo: {
       width: 80,

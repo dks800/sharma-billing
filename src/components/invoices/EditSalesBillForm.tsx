@@ -10,8 +10,10 @@ import Modal from "../common/Modal";
 import { PAYMENT_STATUSES, ROUTES } from "../../constants";
 import { BiPencil } from "react-icons/bi";
 import { FiTrash2 } from "react-icons/fi";
+import { auth } from "../../firebase";
+import { getFormChanges } from "./salesBillUtils";
 
-interface Item {
+export interface Item {
   description: string;
   hsnCode: string;
   qty: number;
@@ -30,17 +32,26 @@ export default function EditSalesBillForm() {
   const location = useLocation();
   const navigate = useNavigate();
   const { bill, companyId, companyName } = location.state || {};
-
+  const [user, setUser] = useState<any>(null);
   const { updateItem: updateSalesBill } = useSalesBill(companyId || "");
-
   const [billNumber, setBillNumber] = useState<string>(bill?.billNumber || "");
   const [billDate, setBillDate] = useState<string>(
     bill?.billDate?.substring(0, 10) ||
       new Date().toISOString().substring(0, 10)
   );
   const [paymentStatus, setPaymentStatus] = useState<
-    "Paid" | "Pending" | "Partially Paid"
+    "Paid" | "Pending" | "Partial"
   >((bill?.paymentStatus as any) || "Pending");
+  const [ewayBillNo, setEwayBillNo] = useState<string>(bill?.ewayBillNo || "");
+  const [ewayBillDateTime, setEwayBillDateTime] = useState<string>(
+    bill?.ewayBillDateTime || ""
+  );
+  const [locationFrom, setLocationFrom] = useState<string>(
+    bill?.locationFrom || ""
+  );
+  const [locationTo, setLocationTo] = useState<string>(bill?.locationTo || "");
+  const [dispatchBy, setDispatchBy] = useState<string>(bill?.dispatchBy || "");
+
   const [internalComments, setInternalComments] = useState<string>(
     bill?.internalComments || ""
   );
@@ -69,6 +80,13 @@ export default function EditSalesBillForm() {
     footer: null,
   });
   const [showConfirm, setShowConfirm] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = auth?.onAuthStateChanged((user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const { data: allClients = [] } = useClients();
 
@@ -125,93 +143,41 @@ export default function EditSalesBillForm() {
 
   const totals = calculateTotals();
 
-  // 🔹 Compare with original bill for change detection
-  const getChanges = () => {
-    if (!bill) return [];
-    const changes: { field: string; before: any; after: any }[] = [];
-
-    const fieldMap: Record<string, string> = {
-      billNumber: "Bill Number",
-      billDate: "Bill Date",
-      paymentStatus: "Payment Status",
-      internalComments: "Internal Comments",
-      externalComments: "External Comments",
-      taxType: "Tax Type",
-      customerName: "Customer",
-      customerGSTIN: "Customer GSTIN",
-    };
-
-    if (bill.billNumber !== billNumber)
-      changes.push({
-        field: fieldMap.billNumber,
-        before: bill.billNumber,
-        after: billNumber,
-      });
-    if (bill.billDate?.substring(0, 10) !== billDate)
-      changes.push({
-        field: fieldMap.billDate,
-        before: bill.billDate,
-        after: billDate,
-      });
-    if (bill.paymentStatus !== paymentStatus)
-      changes.push({
-        field: fieldMap.paymentStatus,
-        before: bill.paymentStatus,
-        after: paymentStatus,
-      });
-    if (bill.internalComments !== internalComments)
-      changes.push({
-        field: fieldMap.internalComments,
-        before: bill.internalComments,
-        after: internalComments,
-      });
-    if (bill.externalComments !== externalComments)
-      changes.push({
-        field: fieldMap.externalComments,
-        before: bill.externalComments,
-        after: externalComments,
-      });
-    if (bill.taxType !== taxType)
-      changes.push({
-        field: fieldMap.taxType,
-        before: bill.taxType,
-        after: taxType,
-      });
-    if (bill.customerName !== selectedCustomer?.name)
-      changes.push({
-        field: fieldMap.customerName,
-        before: bill.customerName,
-        after: selectedCustomer?.name,
-      });
-    if (bill.customerGSTIN !== selectedCustomer?.gstin)
-      changes.push({
-        field: fieldMap.customerGSTIN,
-        before: bill.customerGSTIN,
-        after: selectedCustomer?.gstin,
-      });
-
-    items.forEach((item, idx) => {
-      const orig = bill.items[idx] || {};
-      (
-        ["description", "hsnCode", "qty", "unit", "rate"] as (keyof Item)[]
-      ).forEach((key) => {
-        if (item[key] !== orig[key]) {
-          changes.push({
-            field: `Item ${idx + 1} → ${key}`,
-            before: orig[key],
-            after: item[key],
-          });
-        }
-      });
-    });
-
-    return changes;
-  };
-
-  const hasChanges = getChanges().length > 0;
+  const hasChanges =
+    getFormChanges(
+      bill,
+      billNumber,
+      billDate,
+      paymentStatus,
+      ewayBillNo,
+      ewayBillDateTime,
+      locationFrom,
+      locationTo,
+      dispatchBy,
+      internalComments,
+      externalComments,
+      taxType,
+      selectedCustomer,
+      items
+    ).length > 0;
 
   const handlePreview = () => {
-    const changes = getChanges();
+    const changes = getFormChanges(
+      bill,
+      billNumber,
+      billDate,
+      paymentStatus,
+      ewayBillNo,
+      ewayBillDateTime,
+      locationFrom,
+      locationTo,
+      dispatchBy,
+      internalComments,
+      externalComments,
+      taxType,
+      selectedCustomer,
+      items
+    );
     if (changes.length === 0) {
       alert("No changes detected!");
       return;
@@ -278,7 +244,13 @@ export default function EditSalesBillForm() {
       internalComments,
       externalComments,
       taxType,
+      ewayBillNo,
+      dispatchBy,
+      locationFrom,
+      locationTo,
+      ewayBillDateTime,
       updatedAt: new Date(),
+      updatedBy: user?.email || "unknown",
     });
 
     setLoading(false);
@@ -298,20 +270,35 @@ export default function EditSalesBillForm() {
     setModalAttr({} as ModalAttrType);
   };
 
+  const renderSaveUpdatesButton = () => (
+    <button
+      className={`px-5 py-2 rounded ${
+        hasChanges
+          ? "bg-green-600 hover:bg-green-700 text-white"
+          : "bg-gray-300 text-gray-600 cursor-not-allowed"
+      }`}
+      onClick={handlePreview}
+      disabled={!hasChanges}
+    >
+      Save Changes
+    </button>
+  );
+
   return (
     <div className="p-6 max-w-6xl mx-auto bg-white shadow-xl rounded-xl">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-        <h1 className="text-2xl font-bold">{companyName}</h1>
-        <button
-          className="text-blue-600 underline"
-          onClick={() => navigate(ROUTES?.SELECTCOMPANYSALES)}
-        >
-          Change Company
-        </button>
+        <h1 className="text-2xl font-bold">{`${companyName} #${billNumber}`}</h1>
+        <div className="flex gap-4">
+          <button
+            className="text-blue-600 underline"
+            onClick={() => navigate(ROUTES?.SELECTCOMPANYSALES)}
+          >
+            Change Company
+          </button>
+          {renderSaveUpdatesButton()}
+        </div>
       </div>
 
-      {/* Grid: Bill Number, Bill Date, Payment Status */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
         <div>
           <label className="block font-medium mb-1">Bill Number</label>
@@ -346,12 +333,73 @@ export default function EditSalesBillForm() {
             ))}
           </select>
         </div>
+        <div>
+          <label className="block font-medium mb-1">From Location</label>
+          <input
+            type="input"
+            value={locationFrom}
+            onChange={(e) => setLocationFrom(e.target.value)}
+            className="w-full border rounded p-2"
+          />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">To Location</label>
+          <input
+            type="input"
+            value={locationTo}
+            onChange={(e) => setLocationTo(e.target.value)}
+            className="w-full border rounded p-2"
+          />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">Dispatch By</label>
+          <input
+            type="input"
+            value={dispatchBy}
+            onChange={(e) => setDispatchBy(e.target.value)}
+            className="w-full border rounded p-2"
+          />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">Eway Bill No.</label>
+          <input
+            type="input"
+            value={ewayBillNo}
+            onChange={(e) => setEwayBillNo(e.target.value)}
+            className="w-full border rounded p-2"
+          />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">
+            Eway Bill Date & Time
+          </label>
+          <input
+            type="input"
+            value={ewayBillDateTime}
+            onChange={(e) => setEwayBillDateTime(e.target.value)}
+            className="w-full border rounded p-2"
+          />
+        </div>
       </div>
 
       {/* Customer */}
       <div className="mb-4 flex flex-col sm:flex-row gap-2 items-center">
         <div className="flex-1 w-full">
-          <label className="block font-medium mb-1">Customer</label>
+          <div className="flex items-center gap-2">
+            <label className="block font-medium mb-1">Customer</label>
+            {selectedCustomer && (
+              <div className="text-sm text-gray-600 mb-1">
+                <span className="font-semibold">
+                  - {selectedCustomer.name} -{" "}
+                </span>
+                {selectedCustomer.gstin && (
+                  <span className="ml-2 text-gray-500">
+                    {selectedCustomer.gstin}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
           <CustomerDropdown
             customers={customers}
             value={selectedCustomer}
@@ -362,7 +410,7 @@ export default function EditSalesBillForm() {
           />
         </div>
         <button
-          className="bg-green-500 text-white px-3 py-2 rounded"
+          className="bg-sky-500 hover:bg-sky-600 text-white px-3 py-2 rounded"
           onClick={() => navigate(ROUTES?.CUSTOMERS)}
         >
           + New Customer
@@ -383,7 +431,7 @@ export default function EditSalesBillForm() {
                 <th className="px-2 py-1 border w-[80px]">Unit</th>
                 <th className="px-2 py-1 border w-[150px]">Rate</th>
                 <th className="px-2 py-1 border w-[150px]">Amount</th>
-                <th className="px-2 py-1 border w-[150px]"></th>
+                <th className="px-2 py-1 border w-[50px]"></th>
               </tr>
             </thead>
             <tbody>
@@ -457,12 +505,14 @@ export default function EditSalesBillForm() {
                     <td className="px-2 py-1 border text-right">
                       {formatCurrency((item.qty * item.rate).toFixed(2))}
                     </td>
-                    <td className="px-2 py-1 border text-center cursor-pointer text-red-600 hover:text-red-800">
+                    <td className="px-2 py-1 border">
                       {idx !== 0 && (
-                        <FiTrash2
-                          title="Remove this item"
-                          onClick={() => handleRemoveItem(idx)}
-                        />
+                        <div className="flex items-center justify-center h-full text-red-600 hover:text-red-800 cursor-pointer">
+                          <FiTrash2
+                            title="Remove this item"
+                            onClick={() => handleRemoveItem(idx)}
+                          />
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -547,7 +597,7 @@ export default function EditSalesBillForm() {
         <button
           type="button"
           onClick={handleAddItem}
-          className="mt-3 bg-blue-500 text-white px-3 py-1 rounded"
+          className="mt-3 bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded"
         >
           + Add Item
         </button>
@@ -590,24 +640,14 @@ export default function EditSalesBillForm() {
       {/* Save Button */}
       <div className="flex flex-col sm:flex-row gap-3 justify-end">
         <button
-          className="bg-blue-400 hover:bg-blue-600 text-white px-4 py-2 rounded"
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
           onClick={() =>
             navigate(ROUTES?.SALES, { state: { companyId, companyName } })
           }
         >
           Cancel
         </button>
-        <button
-          className={`px-5 py-2 rounded ${
-            hasChanges
-              ? "bg-green-600 hover:bg-green-700 text-white"
-              : "bg-gray-300 text-gray-600 cursor-not-allowed"
-          }`}
-          onClick={handlePreview}
-          disabled={!hasChanges}
-        >
-          Save Changes
-        </button>
+        {renderSaveUpdatesButton()}
       </div>
 
       {/* Confirmation Modal */}

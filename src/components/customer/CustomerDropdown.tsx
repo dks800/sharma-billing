@@ -12,34 +12,38 @@ interface CustomerDropdownProps {
   value: Client | null;
   onChange: (client: Client) => void;
   placeholder?: string;
+  className?: string;
 }
 
 const CustomerDropdown: React.FC<CustomerDropdownProps> = ({
   customers,
   value,
   onChange,
+  className,
   placeholder = "Select Customer",
 }) => {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
 
-  const filtered = customers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.gstin?.toLowerCase().includes(search.toLowerCase())
-  )?.sort((a, b) => a.name.localeCompare(b.name));
+  const filtered = customers
+    .filter(
+      (c) =>
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        c.gstin?.toLowerCase().includes(search.toLowerCase())
+    )
+    ?.sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="relative w-full">
       <div
-        className="border rounded p-2 cursor-pointer bg-white"
+        className={`border rounded p-2 cursor-pointer ${className}`}
         onClick={() => setOpen(!open)}
       >
         {value && Object?.keys(value)?.length ? (
-          <div className="text-sm text-gray-500 max-w-[200px] truncate">
-            <span className="font-medium text-black">{value.name}</span> ({value.gstin || "No GSTIN"})
+          <div className="text-sm text-gray-500">
+            <span className="font-medium text-black">{value.name}</span> (
+            {value.gstin || "No GSTIN"})
           </div>
-
         ) : (
           <span className="text-gray-400">{placeholder}</span>
         )}

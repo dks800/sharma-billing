@@ -1,5 +1,3 @@
-import React from "react";
-
 const renderPaymentStatus = (status: string) => {
   if (!status) return "-";
   const baseClass =

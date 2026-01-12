@@ -7,6 +7,9 @@ export interface Company {
   gstin: string;
   address: string;
   phone: string;
+  contactNumber: string;
+  manufacturerDetails: string;
+  email: string;
   taxType: string;
   city?: string;
   createdAt?: any;

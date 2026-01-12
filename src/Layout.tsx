@@ -1,5 +1,5 @@
 // src/components/Layout.tsx
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "./firebase";
@@ -16,6 +16,8 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import { AiFillHome } from "react-icons/ai";
+import { BiEnvelopeOpen } from "react-icons/bi";
+import { TbInvoice } from "react-icons/tb";
 
 export default function Layout() {
   const [loading, setLoading] = useState(false);
@@ -84,6 +86,20 @@ export default function Layout() {
         className="hover:bg-[#1A237E] p-2 rounded flex items-center gap-2"
       >
         <BsFileBarGraphFill /> Quotations
+      </Link>
+      <Link
+        to={ROUTES?.SELECTCOMPANYLETTERPADS}
+        onClick={() => setMenuOpen(false)}
+        className="hover:bg-[#1A237E] p-2 rounded flex items-center gap-2"
+      >
+        <TbInvoice /> Proforma Invoice
+      </Link>
+      <Link
+        to={ROUTES?.SELECTCOMPANYLETTERPADS}
+        onClick={() => setMenuOpen(false)}
+        className="hover:bg-[#1A237E] p-2 rounded flex items-center gap-2"
+      >
+        <BiEnvelopeOpen /> Letter Pad
       </Link>
     </nav>
   );

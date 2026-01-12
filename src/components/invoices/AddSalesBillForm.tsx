@@ -7,6 +7,7 @@ import CustomerDropdown, { Client } from "../customer/CustomerDropdown";
 import { formatCurrency, numberToWords } from "../../utils/commonUtils";
 import Modal from "../common/Modal";
 import {
+  COLLECTIONS,
   globalCurrencies,
   PAYMENT_STATUSES,
   ROUTES,
@@ -40,9 +41,9 @@ export default function AddSalesBillForm() {
     companyId || ""
   );
 
-  const [billNumber, setBillNumber] = useState<string>("");
+  const [billNumber, setBillNumber] = useState<number>(0);
   const [currency, setCurrency] = useState("INR");
-  const [autoBillNumber, setAutoBillNumber] = useState("");
+  const [autoBillNumber, setAutoBillNumber] = useState<number>(0);
   const [locationFrom, setLocationFrom] = useState("Vijapur");
   const [locationTo, setLocationTo] = useState("");
   const [ewayBillNo, setEwayBillNo] = useState("");
@@ -93,10 +94,10 @@ export default function AddSalesBillForm() {
 
     if (!billNumber) {
       setLoadingBillNumber(true);
-      getNextBillNumber(companyId)
+      getNextBillNumber(companyId, "billNumber", COLLECTIONS.SALES_BILL)
         .then((nextNo) => {
-          setBillNumber(nextNo);
-          setAutoBillNumber(nextNo);
+          setBillNumber(Number(nextNo));
+          setAutoBillNumber(Number(nextNo));
         })
         .finally(() => setLoadingBillNumber(false));
     }
@@ -146,6 +147,38 @@ export default function AddSalesBillForm() {
     };
   };
 
+  const saveFinalCall = async () => {
+    setLoading(true);
+    await addSalesBill({
+      companyId,
+      companyName,
+      billNumber,
+      billDate,
+      financialYear: getFinancialYear(new Date(billDate)),
+      customerGSTIN: selectedCustomer?.gstin,
+      customerName: selectedCustomer?.name,
+      items,
+      totalBeforeTax: totals.totalBeforeTax,
+      totalGST: totals.totalGST,
+      roundUp: totals.roundUp,
+      totalAmount: totals.totalAmount,
+      paymentStatus,
+      currency,
+      internalComments,
+      externalComments,
+      taxType,
+      locationFrom,
+      locationTo,
+      ewayBillNo,
+      dispatchBy,
+      ewayBillDateTime,
+      createdAt: new Date(),
+    });
+
+    setLoading(false);
+    navigate(ROUTES?.SALES, { state: { companyId, companyName } });
+  };
+
   const handleSave = async () => {
     let errorMsg = "";
     if (!companyId) errorMsg = "Select a company first!";
@@ -191,47 +224,16 @@ export default function AddSalesBillForm() {
       setShowConfirm(true);
       setModalAttr({
         title: "Warning!",
-        content: `You have changed the auto-generated Bill Number from ${autoBillNumber} to ${billNumber}. Do you want to continue?`,
+        content: `You have changed the auto-generated Bill Number \nfrom: ${autoBillNumber} \nto: ${billNumber}. \nDo you want to continue?`,
         type: "warning",
         footer: getBillNumberChangeWarningFooter(),
       });
       return;
-      //TODO - call save bill on confirm
     }
-
-    setLoading(true);
-    await addSalesBill({
-      companyId,
-      companyName,
-      billNumber,
-      billDate,
-      financialYear: getFinancialYear(new Date(billDate)),
-      customerGSTIN: selectedCustomer?.gstin,
-      customerName: selectedCustomer?.name,
-      items,
-      totalBeforeTax: totals.totalBeforeTax,
-      totalGST: totals.totalGST,
-      roundUp: totals.roundUp,
-      totalAmount: totals.totalAmount,
-      paymentStatus,
-      currency,
-      internalComments,
-      externalComments,
-      taxType,
-      locationFrom,
-      locationTo,
-      ewayBillNo,
-      dispatchBy,
-      ewayBillDateTime,
-      createdAt: new Date(),
-    });
-
-    setLoading(false);
-    navigate(ROUTES?.SALES, { state: { companyId, companyName } });
+    saveFinalCall();
   };
 
   const clearForm = () => {
-    setBillNumber(billNumber + 1);
     setBillDate(new Date().toISOString().substring(0, 10));
     setSelectedCustomer({} as Client);
     setPaymentStatus("Pending");
@@ -272,23 +274,26 @@ export default function AddSalesBillForm() {
       <>
         {renderCancelButtonForModal()}
         <button
+          disabled={loading}
           onClick={() => {
             setShowConfirm(false);
-            handleSave(); //TODO - call the save function here
+            saveFinalCall();
           }}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          className={`px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
         >
-          Yes, Save Anyway
+          {loading ? "Saving..." : "Yes, Save Anyway"}
         </button>
       </>
     );
   };
 
+  console.log(selectedCustomer, "selectedCustomer");
+
   return (
     <div className="p-6 max-w-6xl mx-auto bg-white shadow-xl rounded-xl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-        <h1 className="text-2xl font-bold">{companyName}</h1>
+        <h1 className="text-2xl font-bold">{`${companyName} #${billNumber}`}</h1>
         <button
           className="text-blue-600 underline"
           onClick={() => navigate(ROUTES?.SELECTCOMPANYSALES)}
@@ -309,7 +314,7 @@ export default function AddSalesBillForm() {
               placeholder={
                 loadingBillNumber ? "Loading..." : "Enter Bill Number"
               }
-              onChange={(e) => setBillNumber(e.target.value)}
+              onChange={(e) => setBillNumber(Number(e.target.value))}
               className="w-full border rounded p-2 pr-10" // add pr-10 so text doesn't overlap loader
             />
 
@@ -445,7 +450,22 @@ export default function AddSalesBillForm() {
       {/* Customer */}
       <div className="mb-4 flex flex-col sm:flex-row gap-2 items-center">
         <div className="flex-1 w-full">
-          <label className="block font-medium mb-1">Customer</label>
+          <div className="flex items-center gap-2">
+            <label className="block font-medium mb-1">Customer</label>
+            {selectedCustomer && (
+              <div className="text-sm text-gray-600 mb-1">
+                <span className="font-semibold">
+                  - {selectedCustomer.name} -{" "}
+                </span>
+                {selectedCustomer.gstin && (
+                  <span className="ml-2 text-gray-500">
+                    {selectedCustomer.gstin}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
           <CustomerDropdown
             customers={customers}
             value={selectedCustomer}
@@ -465,7 +485,6 @@ export default function AddSalesBillForm() {
         </button>
       </div>
 
-      {/* Items */}
       <div className="mb-4">
         {/* Table on desktop */}
         <div className="hidden sm:block overflow-x-auto">
