@@ -29,6 +29,8 @@ export interface SalesBill {
   companyName: string;
   currency: string;
   billNumber: string;
+  poNumber: string;
+  poDate: string;
   financialYear: string;
   paymentStatus: string;
   customerGSTIN: string;

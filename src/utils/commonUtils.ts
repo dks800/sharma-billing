@@ -1,3 +1,6 @@
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
 import HQTLogo from "../images/HQTLogo.png";
 import DevLogo from "../images/DEVLogo.png";
 import SLELogo from "../images/SLELogo.png";
@@ -150,3 +153,8 @@ export const getCompanyStamp = (companyId: string) => {
   };
   return companyMap[companyId || ""] || "";
 };
+
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}

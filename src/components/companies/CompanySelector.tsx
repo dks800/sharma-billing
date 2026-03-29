@@ -1,7 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { useCompanies } from "../../hooks/useCompanies";
+import { useState, useEffect } from "react";
 import Loader from "../Loader";
 import { ROUTES } from "../../constants";
+import { FiSearch, FiX } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
+import { getCompanyLogo } from "../../utils/commonUtils";
 
 export default function CompanySelectorPage({
   redirectTo,
@@ -10,6 +14,7 @@ export default function CompanySelectorPage({
 }) {
   const navigate = useNavigate();
   const { data: companies, loading, error } = useCompanies();
+  const [search, setSearch] = useState("");
 
   const handleSelect = (gstin: string, name: string) => {
     navigate(`/${redirectTo}`, {
@@ -21,37 +26,124 @@ export default function CompanySelectorPage({
     navigate(ROUTES?.DASHBOARD);
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
-        <h2 className="text-xl font-bold mb-4">
-          Select Company for {redirectTo?.toUpperCase()}
-        </h2>
-        <button
-          onClick={handleClose}
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
-        >
-          ✖
-        </button>
+  // ESC to close
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, []);
 
-        {loading ? (
-          <Loader />
-        ) : error ? (
-          <p className="text-red-500">Error loading companies</p>
-        ) : (
-          <ul className="space-y-2 max-h-80 overflow-auto">
-            {companies.map((company: any) => (
-              <li
-                key={company.id}
-                className="p-2 bg-blue-100 rounded cursor-pointer hover:bg-blue-200"
-                onClick={() => handleSelect(company?.gstin, company?.name)}
-              >
-                {company.name}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
+  const filteredCompanies = companies?.filter((company: any) =>
+    company.name.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  // const getInitials = (name: string) => {
+  //   return name
+  //     ?.split(" ")
+  //     .map((n) => n[0])
+  //     .join("")
+  //     .toUpperCase();
+  // };
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.95, opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 md:p-8"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-semibold text-gray-800">
+                Select Company ({redirectTo?.toUpperCase()})
+              </h2>
+            </div>
+            <button
+              onClick={handleClose}
+              className="text-gray-400 hover:text-gray-700 transition"
+            >
+              <FiX size={22} />
+            </button>
+          </div>
+
+          {/* Stats */}
+          <div className="mb-4 text-xs text-gray-400">
+            Total Companies: {companies?.length || 0}
+          </div>
+
+          {/* Search */}
+          <div className="relative mb-6">
+            <FiSearch className="absolute left-3 top-3 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search company..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-3 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+            />
+          </div>
+
+          {/* Content */}
+          <div className="max-h-96 overflow-y-auto space-y-3 pr-1">
+            {loading ? (
+              <div className="flex justify-center py-10">
+                <Loader />
+              </div>
+            ) : error ? (
+              <div className="text-center text-red-500 py-6">
+                Error loading companies
+              </div>
+            ) : filteredCompanies?.length === 0 ? (
+              <div className="text-center text-gray-400 py-6">
+                No companies found
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {filteredCompanies.map((company: any) => (
+                  <div
+                    title={company.name}
+                    key={company.id}
+                    onClick={() => handleSelect(company?.gstin, company?.name)}
+                    className="group flex items-center gap-4 p-4 rounded-2xl border border-gray-200 bg-white 
+                 hover:border-indigo-500 hover:shadow-md 
+                 transition-all duration-200 cursor-pointer"
+                  >
+                    {/* Company Logo */}
+                    <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center shadow-sm">
+                      <img
+                        src={getCompanyLogo(company?.gstin)}
+                        alt={company.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    {/* Company Info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-800 truncate group-hover:text-indigo-600 transition">
+                        {company.name}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1 truncate">
+                        GSTIN: {company.gstin}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }

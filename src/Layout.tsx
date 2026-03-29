@@ -1,30 +1,37 @@
-// src/components/Layout.tsx
 import { useEffect, useState } from "react";
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "./firebase";
-import { FiMenu, FiX } from "react-icons/fi";
-import {
-  BsFileBarGraphFill,
-  BsFilePersonFill,
-  BsFillArrowDownRightCircleFill,
-  BsFillArrowUpRightCircleFill,
-  BsFillBriefcaseFill,
-} from "react-icons/bs";
 import { ROUTES } from "./constants";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ErrorBoundary from "./components/common/ErrorBoundary";
+
+import {
+  FiMenu,
+  FiLogOut,
+  FiChevronLeft,
+  FiChevronRight,
+} from "react-icons/fi";
+import {
+  BsFillBriefcaseFill,
+  BsFilePersonFill,
+  BsFillArrowDownRightCircleFill,
+  BsFillArrowUpRightCircleFill,
+  BsFileBarGraphFill,
+} from "react-icons/bs";
 import { AiFillHome } from "react-icons/ai";
 import { BiEnvelopeOpen } from "react-icons/bi";
 import { TbInvoice } from "react-icons/tb";
 
 export default function Layout() {
   const [loading, setLoading] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
   const navigate = useNavigate();
   const location = useLocation();
-  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -40,137 +47,121 @@ export default function Layout() {
     navigate(ROUTES?.LOGIN);
   };
 
-  const pathParts = location.pathname.split("/").filter(Boolean);
-  const breadcrumb = pathParts.length ? pathParts : ["dashboard"];
+  const navItems = [
+    { name: "Dashboard", icon: AiFillHome, path: ROUTES?.DASHBOARD },
+    { name: "Companies", icon: BsFillBriefcaseFill, path: ROUTES?.COMPANIES },
+    { name: "Customers", icon: BsFilePersonFill, path: ROUTES?.CUSTOMERS },
+    { name: "Sales Bills", icon: BsFillArrowUpRightCircleFill, path: ROUTES?.SELECTCOMPANYSALES },
+    { name: "Purchase Bills", icon: BsFillArrowDownRightCircleFill, path: ROUTES?.SELECTCOMPANYPURCHASE },
+    { name: "Quotations", icon: BsFileBarGraphFill, path: ROUTES?.SELECTCOMPANYQUOTE },
+    { name: "Proforma Invoice", icon: TbInvoice, path: ROUTES?.SELECTCOMPANYLETTERPADS },
+    { name: "Letter Pad", icon: BiEnvelopeOpen, path: ROUTES?.SELECTCOMPANYLETTERPADS },
+  ];
 
-  const NavLinks = () => (
-    <nav className="flex flex-col gap-4 mt-10 text-sm md:text-base">
-      <Link
-        to={ROUTES?.DASHBOARD}
-        onClick={() => setMenuOpen(false)}
-        className="hover:bg-[#1A237E] p-2 rounded flex items-center gap-2"
-      >
-        <AiFillHome /> Dashboard
-      </Link>
-      <Link
-        to={ROUTES?.COMPANIES}
-        onClick={() => setMenuOpen(false)}
-        className="hover:bg-[#1A237E] p-2 rounded flex items-center gap-2"
-      >
-        <BsFillBriefcaseFill /> Companies
-      </Link>
-      <Link
-        to={ROUTES?.CUSTOMERS}
-        onClick={() => setMenuOpen(false)}
-        className="hover:bg-[#1A237E] p-2 rounded flex items-center gap-2"
-      >
-        <BsFilePersonFill /> Customers
-      </Link>
-      <Link
-        to={ROUTES?.SELECTCOMPANYSALES}
-        onClick={() => setMenuOpen(false)}
-        className="hover:bg-[#1A237E] p-2 rounded flex items-center gap-2"
-      >
-        <BsFillArrowUpRightCircleFill /> Sales Bills
-      </Link>
-      <Link
-        to={ROUTES?.SELECTCOMPANYPURCHASE}
-        onClick={() => setMenuOpen(false)}
-        className="hover:bg-[#1A237E] p-2 rounded flex items-center gap-2"
-      >
-        <BsFillArrowDownRightCircleFill /> Purchase Bills
-      </Link>
-      <Link
-        to={ROUTES?.SELECTCOMPANYQUOTE}
-        onClick={() => setMenuOpen(false)}
-        className="hover:bg-[#1A237E] p-2 rounded flex items-center gap-2"
-      >
-        <BsFileBarGraphFill /> Quotations
-      </Link>
-      <Link
-        to={ROUTES?.SELECTCOMPANYLETTERPADS}
-        onClick={() => setMenuOpen(false)}
-        className="hover:bg-[#1A237E] p-2 rounded flex items-center gap-2"
-      >
-        <TbInvoice /> Proforma Invoice
-      </Link>
-      <Link
-        to={ROUTES?.SELECTCOMPANYLETTERPADS}
-        onClick={() => setMenuOpen(false)}
-        className="hover:bg-[#1A237E] p-2 rounded flex items-center gap-2"
-      >
-        <BiEnvelopeOpen /> Letter Pad
-      </Link>
-    </nav>
-  );
+  const isActive = (path: string) => location.pathname === path;
 
   const getInitials = () => {
     const name = user?.displayName?.split(" ");
-    if (!name || name?.length < 1) return "";
-    return name?.[0]?.charAt(0) + name?.[1]?.charAt(0);
+    if (!name) return "";
+    return name.map((n: string) => n[0]).join("").toUpperCase();
   };
 
   return (
-    <div className="flex min-h-screen bg-[#E8EAFF]">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
       <ToastContainer position="top-right" autoClose={3000} />
+
+      {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 bottom-0 w-56 bg-[#003366] text-white flex flex-col p-4 z-30 transform transition-transform duration-300 ease-in-out
-        ${menuOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
+        className={`
+        fixed md:relative z-40
+        ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+        transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? "w-64" : "w-20"}
+        bg-white border-r shadow-sm h-screen flex flex-col`}
       >
-        <div className="flex justify-between items-center md:hidden">
-          <h2 className="text-lg font-bold">Menu</h2>
-          <button onClick={() => setMenuOpen(false)}>
-            <FiX size={24} />
+        {/* Logo */}
+        <div className="flex items-center justify-between p-4 border-b">
+          {sidebarOpen && (
+            <h1 className="text-lg font-bold text-indigo-600">
+              Sharma Billing
+            </h1>
+          )}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="text-gray-500"
+          >
+            {sidebarOpen ? <FiChevronLeft /> : <FiChevronRight />}
           </button>
         </div>
-        <NavLinks />
+
+        {/* Navigation */}
+        <nav className="flex-1 p-3 space-y-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.name}
+                title={item.name}
+                to={item.path}
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all text-sm font-medium
+                ${
+                  isActive(item.path)
+                    ? "bg-indigo-600 text-white shadow-md"
+                    : "text-gray-600 hover:bg-indigo-50"
+                }`}
+              >
+                <Icon size={18} />
+                {sidebarOpen && <span>{item.name}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Logout */}
+        <div className="p-4 border-t">
+          <button
+            onClick={handleLogout}
+            disabled={loading}
+            className="flex items-center gap-2 w-full text-sm font-medium text-red-500 hover:bg-red-50 px-3 py-2 rounded-xl transition"
+          >
+            <FiLogOut />
+            {sidebarOpen && (loading ? "Logging out..." : "Logout")}
+          </button>
+        </div>
       </aside>
 
-      <div className="flex-1 flex flex-col md:ml-56">
-        <header className="flex justify-between items-center bg-[#Cce0ff] p-4 shadow-md sticky top-0 z-10">
+      {/* Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Topbar */}
+        <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-md border-b shadow-sm px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               className="md:hidden"
-              onClick={() => setMenuOpen((prev) => !prev)}
+              onClick={() => setMobileOpen(true)}
             >
-              <FiMenu size={24} />
+              <FiMenu size={22} />
             </button>
-            <div
-              className="text-sm text-[#003366] capitalize truncate max-w-[200px] sm:max-w-xs md:max-w-md"
-              title={breadcrumb.join(" / ")}
-            >
-              {breadcrumb.join(" / ")}
-            </div>
+
+            <h2 className="text-sm md:text-base font-semibold text-gray-700 capitalize">
+              {location.pathname.split("/").filter(Boolean).join(" / ") || "dashboard"}
+            </h2>
           </div>
-          <div className="hidden md:block text-lg font-bold text-[#003366] whitespace-nowrap">
-            🚀 Sharma Billing
-          </div>
-          <div className="flex items-center gap-2 flex-row">
-            <span className="hidden md:inline">{user?.displayName}</span>
-            <div
-              role="img"
-              aria-label="Avatar"
-              title={user?.displayName}
-              className="inline sm:hidden bg-gray-500 w-8 h-8 text-white rounded-full flex items-center justify-center font-medium select-none"
-            >
-              {getInitials()}
+
+          {/* User Info */}
+          <div className="flex items-center gap-3">
+            <div className="hidden md:block text-sm text-gray-600">
+              {user?.displayName}
             </div>
 
-            <button
-              onClick={handleLogout}
-              disabled={loading}
-              className="bg-[#1A237E] text-white px-3 sm:px-4 py-2 rounded hover:opacity-80 flex items-center justify-center text-sm sm:text-base"
-            >
-              {loading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                "Logout"
-              )}
-            </button>
+            <div className="w-9 h-9 bg-indigo-600 text-white rounded-full flex items-center justify-center text-sm font-semibold shadow-md">
+              {getInitials()}
+            </div>
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 overflow-auto">
+        {/* Main Content */}
+        <main className="flex-1 p-4 md:p-6 overflow-auto">
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>

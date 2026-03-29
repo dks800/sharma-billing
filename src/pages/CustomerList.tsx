@@ -38,7 +38,7 @@ export default function CustomerListPage() {
     return clients.filter((c: any) =>
       [c.name, c.email, c.phone, c.poc]
         .filter(Boolean)
-        .some((field) => field.toLowerCase().includes(search.toLowerCase()))
+        .some((field) => field.toLowerCase().includes(search.toLowerCase())),
     );
   }, [clients, search]);
 
@@ -54,12 +54,12 @@ export default function CustomerListPage() {
       const existingClient = clients.find(
         (c) =>
           c.gstin?.trim().toLowerCase() ===
-          clientData.gstin?.trim().toLowerCase()
+          clientData.gstin?.trim().toLowerCase(),
       );
 
       if (!editingClient && existingClient) {
         toast.warning(
-          `Customer with GSTIN ${clientData.gstin} already exists: ${existingClient.name}`
+          `Customer with GSTIN ${clientData.gstin} already exists: ${existingClient.name}`,
         );
         return;
       }
@@ -95,7 +95,7 @@ export default function CustomerListPage() {
 
       if (!snap.empty) {
         alert(
-          `Cannot delete "${confirmDelete.name}". There are sales/purchase bills linked to this client.`
+          `Cannot delete "${confirmDelete.name}". There are sales/purchase bills linked to this client.`,
         );
         setConfirmDelete(null);
         return;
@@ -172,9 +172,9 @@ export default function CustomerListPage() {
         </div>
       </div>
 
-      {/* Add/Edit Modal */}
       {isModalOpen && (
         <Modal
+          size="lg"
           isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false);
@@ -296,19 +296,9 @@ export default function CustomerListPage() {
                     GSTIN: {client.gstin || "-"}
                   </p>
                   <p className="text-sm text-gray-600">
-                    POC: {client.poc || "-"}
-                  </p>
-                  <p className="text-sm text-gray-600">
                     Phone: {client.phone || "-"}
                   </p>
-                  <p className="text-sm text-gray-600">
-                    Email: {client.email || "-"}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Tax Type: {client.taxType || "-"}
-                  </p>
-
-                  <div className="flex gap-4 mt-3">
+                  <div className="flex gap-4 mt-3 items-center justify-space-around">
                     <button
                       className="text-blue-500 hover:underline flex items-center"
                       onClick={() => {

@@ -252,9 +252,9 @@ const SingleQuotationPDF: React.FC<Props> = ({ data, calculateGst = true }) => {
 
   const footerImageSectionNode = (
     <View style={styles.footerImageSection}>
+      <Image src={sb} style={styles.footerImage} />
       <Image src={anb} style={styles.footerImage} />
       <Image src={min} style={styles.footerImage} />
-      <Image src={sb} style={styles.footerImage} />
       <Image src={sj} style={styles.footerImage} />
     </View>
   );

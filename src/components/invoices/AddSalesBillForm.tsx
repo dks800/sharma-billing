@@ -15,6 +15,8 @@ import {
 } from "../../constants";
 import { FiTrash2 } from "react-icons/fi";
 import { BsFillPlusCircleFill } from "react-icons/bs";
+import { calculateBillTotals } from "./salesBillUtils";
+import { toast } from "react-toastify";
 
 interface Item {
   description: string;
@@ -42,9 +44,11 @@ export default function AddSalesBillForm() {
   );
 
   const [billNumber, setBillNumber] = useState<number>(0);
+  const [poNumber, setPoNumber] = useState<string>("");
+  const [poDate, setPoDate] = useState<string>("");
   const [currency, setCurrency] = useState("INR");
   const [autoBillNumber, setAutoBillNumber] = useState<number>(0);
-  const [locationFrom, setLocationFrom] = useState("Vijapur");
+  const [locationFrom, setLocationFrom] = useState("Vijapur, Gujarat");
   const [locationTo, setLocationTo] = useState("");
   const [ewayBillNo, setEwayBillNo] = useState("");
   const [dispatchBy, setDispatchBy] = useState("");
@@ -78,10 +82,11 @@ export default function AddSalesBillForm() {
   const { data: allClients = [] } = useClients();
 
   useEffect(() => {
-    const companyClients = allClients.map(({ name, taxType, gstin }) => ({
+    const companyClients = allClients.map(({ name, taxType, gstin, city }) => ({
       name,
       taxType,
       gstin,
+      city,
     }));
     setCustomers(companyClients as any);
   }, [allClients]);
@@ -91,7 +96,6 @@ export default function AddSalesBillForm() {
       navigate(ROUTES?.SELECTCOMPANYSALES);
       return;
     }
-
     if (!billNumber) {
       setLoadingBillNumber(true);
       getNextBillNumber(companyId, "billNumber", COLLECTIONS.SALES_BILL)
@@ -122,61 +126,43 @@ export default function AddSalesBillForm() {
     setItems(updated);
   };
 
-  const calculateTotals = () => {
-    let totalBeforeTax = 0;
-    let totalGST = 0;
-
-    items.forEach((item) => {
-      const amount = item.qty * item.rate;
-      totalBeforeTax += amount;
-    });
-    if (taxType === "NA" || taxType === "0") {
-      totalGST = 0;
-    } else if (taxType === "2.5") {
-      totalGST = totalBeforeTax * 0.05;
-    } else if (taxType === "9" || taxType === "18") {
-      totalGST = totalBeforeTax * 0.18;
-    }
-
-    return {
-      totalBeforeTax,
-      totalGST,
-      roundUp:
-        Math.ceil(totalBeforeTax + totalGST) - (totalBeforeTax + totalGST),
-      totalAmount: Math.ceil(totalBeforeTax + totalGST),
-    };
-  };
-
   const saveFinalCall = async () => {
     setLoading(true);
-    await addSalesBill({
-      companyId,
-      companyName,
-      billNumber,
-      billDate,
-      financialYear: getFinancialYear(new Date(billDate)),
-      customerGSTIN: selectedCustomer?.gstin,
-      customerName: selectedCustomer?.name,
-      items,
-      totalBeforeTax: totals.totalBeforeTax,
-      totalGST: totals.totalGST,
-      roundUp: totals.roundUp,
-      totalAmount: totals.totalAmount,
-      paymentStatus,
-      currency,
-      internalComments,
-      externalComments,
-      taxType,
-      locationFrom,
-      locationTo,
-      ewayBillNo,
-      dispatchBy,
-      ewayBillDateTime,
-      createdAt: new Date(),
-    });
-
-    setLoading(false);
-    navigate(ROUTES?.SALES, { state: { companyId, companyName } });
+    try {
+      await addSalesBill({
+        companyId,
+        companyName,
+        billNumber: String(billNumber),
+        billDate,
+        poNumber,
+        poDate,
+        financialYear: getFinancialYear(new Date(billDate)),
+        customerGSTIN: selectedCustomer?.gstin,
+        customerName: selectedCustomer?.name,
+        items,
+        totalBeforeTax: totals.totalBeforeTax,
+        totalGST: totals.totalGST,
+        roundUp: totals.roundUp,
+        totalAmount: totals.totalAmount,
+        paymentStatus,
+        currency,
+        internalComments,
+        externalComments,
+        taxType,
+        locationFrom,
+        locationTo,
+        ewayBillNo,
+        dispatchBy,
+        ewayBillDateTime,
+        createdAt: new Date(),
+      });
+      navigate(ROUTES?.SALES, { state: { companyId, companyName } });
+    } catch (error) {
+      toast.error(error instanceof Error ? error?.message : "Error saving sales bill. Please try again.");
+      console.error("Error saving sales bill:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -185,7 +171,7 @@ export default function AddSalesBillForm() {
     if (!selectedCustomer?.gstin)
       errorMsg = "Customer Missing. Please select a customer";
     if (!addSalesBill) errorMsg = "Hook not ready. Reload App!";
-    const totals = calculateTotals();
+    const totals = calculateBillTotals(items, taxType);
     const duplicateBill = existingBills.find(
       (b: any) => b.billNumber === billNumber
     );
@@ -235,6 +221,8 @@ export default function AddSalesBillForm() {
 
   const clearForm = () => {
     setBillDate(new Date().toISOString().substring(0, 10));
+    setPoNumber("");
+    setPoDate(new Date().toISOString().substring(0, 10));
     setSelectedCustomer({} as Client);
     setPaymentStatus("Pending");
     setInternalComments("");
@@ -242,7 +230,7 @@ export default function AddSalesBillForm() {
     setItems([{ description: "", hsnCode: "", qty: 1, unit: "pcs", rate: 0 }]);
   };
 
-  const totals = calculateTotals();
+  const totals = calculateBillTotals(items, taxType);
 
   const getGstPercent = () => {
     if (!taxType) return "";
@@ -279,15 +267,15 @@ export default function AddSalesBillForm() {
             setShowConfirm(false);
             saveFinalCall();
           }}
-          className={`px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+          className={`px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 ${
+            loading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           {loading ? "Saving..." : "Yes, Save Anyway"}
         </button>
       </>
     );
   };
-
-  console.log(selectedCustomer, "selectedCustomer");
 
   return (
     <div className="p-6 max-w-6xl mx-auto bg-white shadow-xl rounded-xl">
@@ -416,6 +404,25 @@ export default function AddSalesBillForm() {
             className="w-full border rounded p-2"
           />
         </div>
+
+        <div>
+          <label className="block font-medium mb-1">PO Number</label>
+          <input
+            type="input"
+            value={poNumber}
+            onChange={(e) => setPoNumber(e.target.value)}
+            className="w-full border rounded p-2"
+          />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">PO Date</label>
+          <input
+            type="date"
+            value={poDate}
+            onChange={(e) => setPoDate(e.target.value)}
+            className="w-full border rounded p-2"
+          />
+        </div>
         <div>
           <label className="block font-medium mb-1">Dispatch By</label>
           <input
@@ -471,6 +478,7 @@ export default function AddSalesBillForm() {
             value={selectedCustomer}
             onChange={(c) => {
               setSelectedCustomer(c);
+              setLocationTo(c.city || "");
               setTaxType(c.taxType || "NA");
             }}
           />

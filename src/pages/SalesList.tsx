@@ -18,6 +18,7 @@ import { toast } from "react-toastify";
 import SingleBillPDF from "../components/invoices/SingleBillPDF";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 import EmptyState from "../components/common/EmptyState";
+import SalesSummary from "../components/invoices/SalesSummary";
 
 export default function SalesList() {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ export default function SalesList() {
   const [orderByField, setOrderByField] = useState("billNumber");
   const [orderDirection, setOrderDirection] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 10;
+  const rowsPerPage = 30;
   const {
     data: sales,
     loading,
@@ -51,19 +52,20 @@ export default function SalesList() {
   const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
 
   const filteredSales = useMemo(() => {
-    if (!sales || !sales?.length) return [];
+    if (!sales || !sales?.length) return [];    
     return sales.filter((bill: any) =>
       [
         bill.billNumber,
         bill.customerName,
         bill.customerPhone,
         bill.totalAmount?.toString(),
+        bill.financialYear,
         bill.items?.map((i: any) => i.name).join(" "),
       ]
         .filter(Boolean)
         .some((field) =>
-          String(field)?.toLowerCase()?.includes(search?.toLowerCase())
-        )
+          String(field)?.toLowerCase()?.includes(search?.toLowerCase()),
+        ),
     );
   }, [sales, search]);
 
@@ -140,7 +142,7 @@ export default function SalesList() {
       <PDFDownloadLink
         document={<SingleBillPDF bill={bill} />}
         fileName={`sales_${bill?.billNumber}_${formatFinYear(
-          bill?.financialYear
+          bill?.financialYear,
         )}.pdf`}
         className="flex items-center gap-1 text-gray-700 hover:underline"
         onClick={(e) => {
@@ -184,6 +186,7 @@ export default function SalesList() {
                 {({ loading }) => (
                   <button
                     className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
+                    disabled={loading}
                     onClick={() => {
                       if (!loading) {
                         toast.success("PDF download started!");
@@ -223,12 +226,13 @@ export default function SalesList() {
         />
       ) : (
         <>
+          <SalesSummary sales={filteredSales} />
           <div className="hidden sm:block overflow-x-auto bg-white rounded shadow">
-            <table className="min-w-full border">
+            <table className="min-w-full border text-sm">
               <thead className="bg-gray-100">
                 <tr>
                   {[
-                    { label: "Bill No", field: "billNumber" },
+                    { label: "No", field: "billNumber" },
                     { label: "FY", field: "fy" },
                     { label: "Date", field: "date" },
                     { label: "Customer", field: "customerName" },
@@ -267,7 +271,12 @@ export default function SalesList() {
                       {getFinancialYear(bill?.billDate)}
                     </td>
                     <td className="px-4 py-2">{formatDate(bill?.billDate)}</td>
-                    <td className="px-4 py-2">{bill?.customerName}</td>
+                    <td
+                      className="px-4 py-2 truncate max-w-[200px]"
+                      title={bill?.customerName}
+                    >
+                      {bill?.customerName}
+                    </td>
                     <td className="px-4 py-2">
                       {formatCurrency(bill.totalAmount)}
                     </td>
@@ -339,20 +348,24 @@ export default function SalesList() {
                 }}
               >
                 <div className="flex justify-between text-sm font-semibold">
-                  <span>Bill #{bill.billNumber}</span>
                   <span>{formatDate(bill.billDate)}</span>
+                  <p>
+                    <span className="text-sm text-gray-500">
+                      ({getFinancialYear(bill.billDate)})
+                    </span>
+                    &nbsp; Bill #
+                    <span className="text-lg">{bill.billNumber}</span>
+                  </p>
                 </div>
                 <div className="mt-1 text-gray-700">
                   <p>{bill.customerName}</p>
-                  <p className="text-sm text-gray-500">
-                    FY: {getFinancialYear(bill.billDate)}
-                  </p>
-                  <p className="font-bold mt-1">
+
+                  <p className="font-bold mt-1 flex items-center gap-2">
                     {formatCurrency(bill.totalAmount)}
+                    <div className="mt-1">
+                      {renderPaymentStatus(bill.paymentStatus)}
+                    </div>
                   </p>
-                  <div className="mt-1">
-                    {renderPaymentStatus(bill.paymentStatus)}
-                  </div>
                 </div>
               </div>
             ))}

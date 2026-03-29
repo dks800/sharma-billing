@@ -32,12 +32,17 @@ export default function AddLetterpad({
 
   const [form, setForm] = useState({
     letterNumber: "",
-    letterDate: formatDate(new Date()),
+    letterDate: new Date().toISOString().split("T")[0],
     to: "",
     toLine1: "",
     toLine2: "",
     subject: "",
     body: "",
+    isTable: false,
+    table: {
+      headers: ["Col 1"],
+      rows: [{ c0: "" }],
+    },
   });
 
   /** -------------------------
@@ -59,6 +64,8 @@ export default function AddLetterpad({
         toLine2: copyFrom.toLine2,
         subject: copyFrom.subject,
         body: copyFrom.body,
+        isTable: copyFrom.isTable || false,
+        table: copyFrom.table || { headers: ["Col 1"], rows: [{ c0: "" }] },
       });
       return;
     }
@@ -72,6 +79,8 @@ export default function AddLetterpad({
         toLine2: copyFrom.toLine2,
         subject: copyFrom.subject,
         body: copyFrom.body,
+        isTable: copyFrom.isTable || false,
+        table: copyFrom.table || { headers: ["Col 1"], rows: [{ c0: "" }] },
       }));
     }
 
@@ -91,10 +100,66 @@ export default function AddLetterpad({
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const addHeader = () => {
+    setForm((prev) => {
+      const newIndex = prev.table.headers.length;
+      return {
+        ...prev,
+        table: {
+          headers: [...prev.table.headers, `Column ${newIndex + 1}`],
+          rows: prev.table.rows.map((r) => ({
+            ...r,
+            [`c${newIndex}`]: "",
+          })),
+        },
+      };
+    });
+  };
+
+  const addRow = () => {
+    setForm((prev: any) => {
+      const newRow = {} as any;
+      prev.table.headers.forEach((_: any, i: number) => {
+        newRow[`c${i}`] = "";
+      });
+
+      return {
+        ...prev,
+        table: {
+          ...prev.table,
+          rows: [...prev.table.rows, newRow],
+        },
+      };
+    });
+  };
+
+  const updateHeader = (i: number, value: string) => {
+    const headers = [...form.table.headers];
+    headers[i] = value;
+    setForm((prev) => ({
+      ...prev,
+      table: { ...prev.table, headers },
+    }));
+  };
+
+  const updateCell = (rowIndex: number, colIndex: number, value: string) => {
+    const rows = [...form.table.rows];
+    rows[rowIndex] = {
+      ...rows[rowIndex],
+      [`c${colIndex}`]: value,
+    };
+
+    setForm((prev) => ({
+      ...prev,
+      table: { ...prev.table, rows },
+    }));
+  };
+
   const validate = () => {
-    if (!form.to) return "Recipient is required";
-    if (!form.subject) return "Subject is required";
-    if (!form.body) return "Letter body is required";
+    if (!form.letterNumber) return "Letter Number is required";
+    if (!form?.isTable && !form.body) return "Letter body is required";
+    if (form.isTable && (!form.table.headers.length || !form.table.rows.length))
+      return "Table Data is required";
     return "";
   };
 
@@ -229,18 +294,90 @@ export default function AddLetterpad({
               className="w-full border rounded p-2"
             />
           </div>
+          <div className="flex gap-2 items-start sm:flex-row flex-col">
+            {" "}
+            <label className="label w-[120px]">Table Data?</label>
+            <input
+              type="checkbox"
+              className="mt-2"
+              checked={form.isTable}
+              name="isTable"
+              onChange={() =>
+                setForm((prev) => ({ ...prev, isTable: !prev.isTable }))
+              }
+            />
+          </div>
 
           <div className="flex gap-2 items-start sm:flex-row flex-col">
             <label className="label w-[120px]">Letter Body</label>
-            <textarea
-              name="body"
-              value={form.body}
-              onChange={handleChange}
-              rows={10}
-              placeholder="Write letter content here..."
-              className="w-full border rounded p-2  resize-y-none"
-              maxLength={1100}
-            />
+
+            {form.isTable ? (
+              <div className="w-full border rounded p-2 overflow-x-auto space-y-3">
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={addHeader}
+                    className="px-3 py-1 border rounded text-sm"
+                  >
+                    + Add Column
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={addRow}
+                    className="px-3 py-1 border rounded text-sm"
+                  >
+                    + Add Row
+                  </button>
+                </div>
+
+                {/* Table */}
+                <table className="w-full border-collapse border text-sm">
+                  <thead>
+                    <tr>
+                      {form.table.headers.map((h, i) => (
+                        <th key={i} className="border p-1">
+                          <input
+                            value={h}
+                            onChange={(e) => updateHeader(i, e.target.value)}
+                            className="w-full border rounded px-1"
+                          />
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {form.table.rows.map((row: any, rIdx: number) => (
+                      <tr key={rIdx}>
+                        {form.table.headers.map((_: any, cIdx: number) => (
+                          <td key={cIdx} className="border p-1">
+                            <input
+                              value={row[`c${cIdx}`] || ""}
+                              onChange={(e) =>
+                                updateCell(rIdx, cIdx, e.target.value)
+                              }
+                              className="w-full border rounded px-1"
+                            />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <textarea
+                name="body"
+                value={form.body}
+                onChange={handleChange}
+                rows={10}
+                placeholder="Write letter content here..."
+                className="w-full border rounded p-2 resize-none"
+                maxLength={1100}
+              />
+            )}
           </div>
         </div>
       </div>

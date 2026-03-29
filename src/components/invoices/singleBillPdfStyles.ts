@@ -2,9 +2,12 @@ import { StyleSheet } from "@react-pdf/renderer";
 
 export const getStyles = (companyId: string) => {
   const brandColor =
-    companyId === "24BFYPS0683D1Z1" ? "#D62B26" // dev
-      : companyId === "24AWKPS0186R1ZQ" ? "#0033CC" // hqt
-      : companyId === "24HXBPS0898M1ZP" ? "#597515" // ssb
+    companyId === "24BFYPS0683D1Z1"
+      ? "#D62B26" // dev
+      : companyId === "24AWKPS0186R1ZQ"
+      ? "#0033CC" // hqt
+      : companyId === "24HXBPS0898M1ZP"
+      ? "#597515" // ssb
       : "#000000"; // default black
 
   return StyleSheet.create({
@@ -33,6 +36,12 @@ export const getStyles = (companyId: string) => {
       fontWeight: "bold",
       flex: 1,
       textAlign: "center",
+    },
+    specCell: {
+      fontStyle: "italic",
+      color: "gray",
+      paddingVertical: 0,
+      paddingTop: 2,
     },
     // optional tweak if you want perfect horizontal centering regardless of left text width
     spacer: {
@@ -208,7 +217,7 @@ export const getStyles = (companyId: string) => {
     bankDetailsLabel: {
       fontSize: 8,
       textAlign: "left",
-      marginTop: 8,
+      marginTop: 2,
       marginBottom: 2,
       fontWeight: "bold",
       color: brandColor,
@@ -220,8 +229,8 @@ export const getStyles = (companyId: string) => {
       // objectFit: "contain",
     },
     logo: {
-      width: 80,
-      height: 80,
+      width: 75,
+      height: 75,
       objectFit: "contain",
     },
     murlyLogo: {

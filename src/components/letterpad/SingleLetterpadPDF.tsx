@@ -78,6 +78,29 @@ const styles = StyleSheet.create({
     fontSize: 9,
     textAlign: "center",
   },
+  table: {
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: "#000",
+  },
+
+  tableRow: {
+    flexDirection: "row",
+  },
+
+  tableHeader: {
+    fontWeight: "bold",
+    backgroundColor: "#f0f0f0",
+  },
+
+  tableCell: {
+    flex: 1,
+    fontSize: 10,
+    paddingHorizontal: 2,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#000",
+  },
 });
 
 export default function SingleLetterpadPDF({
@@ -126,18 +149,46 @@ export default function SingleLetterpadPDF({
         </View>
 
         {/* To */}
-        <View style={styles.toSection}>
-          <Text>To,</Text>
-          <Text>{letter.to}</Text>
-          <Text>{letter.toLine1}</Text>
-          <Text>{letter.toLine2}</Text>
-        </View>
+        {letter?.to ? (
+          <View style={styles.toSection}>
+            <Text>To,</Text>
+            <Text>{letter.to}</Text>
+            <Text>{letter.toLine1}</Text>
+            <Text>{letter.toLine2}</Text>
+          </View>
+        ) : null}
 
         {/* Subject */}
-        <Text style={styles.subject}>Subject: {letter.subject}</Text>
+        {letter?.subject ? (
+          <Text style={styles.subject}>Subject: {letter.subject}</Text>
+        ) : null}
 
         {/* Body */}
-        <Text style={styles.body}>{letter.body}</Text>
+        {letter.isTable ? (
+          <View style={styles.table}>
+            {/* Table Header */}
+            <View style={styles.tableRow}>
+              {letter.table.headers.map((h: any, i: number) => (
+                <Text key={i} style={[styles.tableCell, styles.tableHeader]}>
+                  {h}
+                </Text>
+              ))}
+            </View>
+
+            {/* Table Rows */}
+            {letter.table.rows.map((row: any, rIdx: number) => (
+              <View key={rIdx} style={styles.tableRow}>
+                {letter.table.headers.map((_: any, cIdx: number) => (
+                  <Text key={cIdx} style={styles.tableCell}>
+                    {row[`c${cIdx}`] || ""}
+                  </Text>
+                ))}
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.body}>{letter.body}</Text>
+        )}
 
         {/* Signature */}
         <View style={styles.signatureBlock}>

@@ -4,6 +4,7 @@ export interface Client {
   id: string;
   name: string;
   gstin?: string;
+  city?: string;
   taxType?: "2.5" | "9" | "18" | "NA";
 }
 

@@ -39,7 +39,7 @@ export default function QuotationList() {
   const [orderByField, setOrderByField] = useState("quoteNumber");
   const [orderDirection, setOrderDirection] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 20;
+  const rowsPerPage = 30;
   const {
     data: quotationList,
     loading,
@@ -345,14 +345,21 @@ export default function QuotationList() {
                       setSelectedBill(bill);
                     }}
                   >
-                    <td className="px-4 py-2">{bill?.quoteNumber}</td>
-                    <td className="px-4 py-2">{formatDate(bill?.quoteDate)}</td>
-                    <td className="px-4 py-2">{bill?.customerName}</td>
-                    <td className="px-4 py-2">{bill?.title}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-1 w-[80px] text-sm">{bill?.quoteNumber}</td>
+                    <td className="px-2 py-1 w-[120px] text-sm">
+                      {formatDate(bill?.quoteDate)}
+                    </td>
+                    <td
+                      className="px-2 py-1 max-w-[150px] truncate text-sm"
+                      title={bill?.customerName}
+                    >
+                      {bill?.customerName}
+                    </td>
+                    <td className="px-2 py-1 text-sm">{bill?.title}</td>
+                    <td className="px-2 py-1 text-sm ">
                       {formatCurrency(bill.totalAmount)}
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-2 py-1 text-sm">
                       <button
                         title="Edit"
                         className="text-blue-500 hover:underline hover:bg-blue-500 hover:text-white rounded px-1 py-1 pt-0"
@@ -512,21 +519,8 @@ export default function QuotationList() {
                           onChange={() => setPrintGst(!printGst)}
                           className="sr-only peer"
                         />
-                        <div
-                          className="
-            w-11 h-6 rounded-full bg-gray-300
-            peer-checked:bg-green-600
-            transition-colors
-          "
-                        />
-                        <div
-                          className="
-            absolute left-1 top-1
-            w-4 h-4 bg-white rounded-full
-            transition-transform
-            peer-checked:translate-x-5
-          "
-                        />
+                        <div className="w-11 h-6 rounded-full bg-gray-300 peer-checked:bg-green-600 transition-colors" />
+                        <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5" />
                       </div>
                     </label>
                   </div>

@@ -16,6 +16,7 @@ const AddCustomerForm = ({ initialData, onSave }: AddCustomerFormProps) => {
     gstin: "",
     lutArn: "",
     taxType: "",
+    city: "",
     address: "",
   });
 
@@ -30,7 +31,7 @@ const AddCustomerForm = ({ initialData, onSave }: AddCustomerFormProps) => {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -47,73 +48,80 @@ const AddCustomerForm = ({ initialData, onSave }: AddCustomerFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <input
-        type="text"
-        name="name"
-        placeholder="Client Name *"
-        value={formData.name}
-        onChange={handleChange}
-        required
-        className="border p-2 rounded w-full"
-      />
-      <input
-        type="text"
-        name="gstin"
-        placeholder="GSTIN"
-        value={formData.gstin}
-        onChange={handleChange}
-        className="border p-2 rounded w-full"
-      />
-      <input
-        type="text"
-        name="lutArn"
-        placeholder="Lut/ARN"
-        value={formData.lutArn}
-        onChange={handleChange}
-        className="border p-2 rounded w-full"
-      />
-      <input
-        type="text"
-        name="poc"
-        placeholder="POC"
-        value={formData.poc}
-        onChange={handleChange}
-        className="border p-2 rounded w-full"
-      />
-      <input
-        type="email"
-        name="email"
-        placeholder="Email"
-        value={formData.email}
-        onChange={handleChange}
-        className="border p-2 rounded w-full"
-      />
-      <input
-        type="text"
-        name="phone"
-        placeholder="Phone"
-        value={formData.phone}
-        onChange={handleChange}
-        className="border p-2 rounded w-full"
-      />
-      <select
-        name="taxType"
-        value={formData.taxType}
-        onChange={handleChange}
-        className="border p-2 rounded w-full"
-        required
-      >
-        <option value="">Select Tax Type</option>
-        {
-          TAX_TYPES?.map((tax) => (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input
+          type="text"
+          name="name"
+          placeholder="Client Name *"
+          value={formData.name}
+          onChange={handleChange}
+          required
+          className="border p-2 rounded w-full"
+        />
+        <input
+          type="text"
+          name="gstin"
+          placeholder="GSTIN"
+          value={formData.gstin}
+          onChange={handleChange}
+          className="border p-2 rounded w-full"
+        />
+        <input
+          type="text"
+          name="lutArn"
+          placeholder="Lut/ARN"
+          value={formData.lutArn}
+          onChange={handleChange}
+          className="border p-2 rounded w-full"
+        />
+        <input
+          type="text"
+          name="poc"
+          placeholder="POC"
+          value={formData.poc}
+          onChange={handleChange}
+          className="border p-2 rounded w-full"
+        />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={handleChange}
+          className="border p-2 rounded w-full"
+        />
+        <input
+          type="text"
+          name="phone"
+          placeholder="Phone"
+          value={formData.phone}
+          onChange={handleChange}
+          className="border p-2 rounded w-full"
+        />
+        <input
+          type="text"
+          name="city"
+          placeholder="City"
+          value={formData.city}
+          onChange={handleChange}
+          className="border p-2 rounded w-full"
+        />
+        <select
+          name="taxType"
+          value={formData.taxType}
+          onChange={handleChange}
+          className="border p-2 rounded w-full"
+          required
+        >
+          <option value="">Select Tax Type</option>
+          {TAX_TYPES?.map((tax) => (
             <option key={tax} value={tax}>
-              {(tax === "NA" || tax === "18") ? tax : `${tax} + ${tax}`}
+              {tax === "NA" || tax === "18" ? tax : `${tax} + ${tax}`}
             </option>
-          ))
-        }
-      </select>
-
+          ))}
+        </select>
+      </div>
       <textarea
         name="address"
         placeholder="Address *"
@@ -122,12 +130,12 @@ const AddCustomerForm = ({ initialData, onSave }: AddCustomerFormProps) => {
         required
         className="border p-2 w-full rounded"
       />
-
       <button
         type="submit"
         disabled={loading}
-        className={`w-full bg-green-500 text-white px-4 py-2 rounded flex items-center justify-center gap-2 hover:bg-green-600 ${loading ? "cursor-not-allowed opacity-70" : ""
-          }`}
+        className={`w-full bg-green-500 text-white px-4 py-2 rounded flex items-center justify-center gap-2 hover:bg-green-600 ${
+          loading ? "cursor-not-allowed opacity-70" : ""
+        }`}
       >
         {loading ? (
           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

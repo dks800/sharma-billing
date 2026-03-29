@@ -42,7 +42,7 @@ export default function LetterpadList() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedLetter, setSelectedLetter] = useState<any | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
-
+  console.log("selectedLetter -->", selectedLetter);
   const { data, loading, error, deleteItem } = useLetterpads(companyId);
 
   const filteredData = useMemo(() => {
@@ -282,24 +282,35 @@ export default function LetterpadList() {
           isOpen={!!selectedLetter}
           onClose={() => setSelectedLetter(null)}
           footer={
-            <PDFDownloadLink
-              document={
-                <SingleLetterpadPDF
-                  letter={selectedLetter}
-                  company={company}
-                  companyLogoNode={companyLogoNode}
-                  companyWatermarkNode={companyWatermarkNode}
-                  companyStampNode={companyStampNode}
-                />
-              }
-              fileName={`letter_${selectedLetter.letterNumber}.pdf`}
-            >
-              {({ loading }) => (
-                <button className="px-4 py-2 bg-blue-600 text-white rounded">
-                  {loading ? "Loading..." : "Print"}
-                </button>
-              )}
-            </PDFDownloadLink>
+            <div className="flex gap-3">
+              <button
+                className="w-full sm:w-auto px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+                onClick={() => {
+                  setShowDetailsModal(false);
+                  setSelectedLetter(null);
+                }}
+              >
+                Close
+              </button>
+              <PDFDownloadLink
+                document={
+                  <SingleLetterpadPDF
+                    letter={selectedLetter}
+                    company={company}
+                    companyLogoNode={companyLogoNode}
+                    companyWatermarkNode={companyWatermarkNode}
+                    companyStampNode={companyStampNode}
+                  />
+                }
+                fileName={`letter_${selectedLetter.letterNumber}.pdf`}
+              >
+                {({ loading }) => (
+                  <button className="px-4 py-2 bg-blue-600 text-white rounded">
+                    {loading ? "Loading..." : "Print"}
+                  </button>
+                )}
+              </PDFDownloadLink>
+            </div>
           }
         >
           <p>
@@ -311,8 +322,44 @@ export default function LetterpadList() {
           <p>
             <b>Subject:</b> {selectedLetter.subject}
           </p>
+
           <hr className="my-2" />
-          <p className="whitespace-pre-wrap">{selectedLetter.body}</p>
+
+          {/* LETTER CONTENT */}
+          {selectedLetter.isTable ? (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse border text-sm mt-2">
+                <thead>
+                  <tr>
+                    {selectedLetter.table.headers.map((h: any, i: number) => (
+                      <th
+                        key={i}
+                        className="border px-2 py-1 text-left font-semibold"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {selectedLetter.table.rows.map((row: any, rIdx: number) => (
+                    <tr key={rIdx}>
+                      {selectedLetter.table.headers.map(
+                        (_: any, cIdx: number) => (
+                          <td key={cIdx} className="border px-1 py-1 align-top">
+                            {row[`c${cIdx}`] || ""}
+                          </td>
+                        )
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="whitespace-pre-wrap">{selectedLetter.body}</p>
+          )}
         </Modal>
       )}
 

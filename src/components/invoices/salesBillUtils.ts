@@ -3,6 +3,8 @@ import { Item } from "./EditSalesBillForm";
 export const getFormChanges = (
   bill: any,
   billNumber: string,
+  poNumber: string,
+  poDate: string,
   billDate: string,
   paymentStatus: string,
   ewayBillNo: string,
@@ -22,6 +24,8 @@ export const getFormChanges = (
   const fieldMap: Record<string, string> = {
     billNumber: "Bill Number",
     billDate: "Bill Date",
+    poNumber: "PO Number",
+    poDate: "PO Date",
     paymentStatus: "Payment Status",
     ewayBillNo: "Eway Bill No.",
     ewayBillDateTime: "Eway Bill Date & Time",
@@ -40,6 +44,18 @@ export const getFormChanges = (
       field: fieldMap.billNumber,
       before: bill.billNumber,
       after: billNumber,
+    });
+  if (bill.poNumber !== poNumber)
+    changes.push({
+      field: fieldMap.poNumber,
+      before: bill.poNumber,
+      after: poNumber,
+    });
+  if (bill.poDate?.substring(0, 10) !== poDate)
+    changes.push({
+      field: fieldMap.poDate,
+      before: bill.poDate,
+      after: poDate,
     });
   if (bill.billDate?.substring(0, 10) !== billDate)
     changes.push({
@@ -194,11 +210,15 @@ export const getItemChanges = (
       }
     };
 
-    compare(`Description(${index+1})`, original.description, item.description);
-    compare(`Qty(${index+1})`, original.qty, item.qty);
-    compare(`Rate(${index+1})`, original.rate, item.rate);
-    compare(`Unit(${index+1})`, original.unit, item.unit);
-    compare(`HSN(${index+1})`, original.hsnCode, item.hsnCode);
+    compare(
+      `Description(${index + 1})`,
+      original.description,
+      item.description
+    );
+    compare(`Qty(${index + 1})`, original.qty, item.qty);
+    compare(`Rate(${index + 1})`, original.rate, item.rate);
+    compare(`Unit(${index + 1})`, original.unit, item.unit);
+    compare(`HSN(${index + 1})`, original.hsnCode, item.hsnCode);
   });
 
   return changes;
@@ -232,7 +252,7 @@ export const getQuotationChanges = (original: any, current: any): Change[] => {
   // Items (important)
   if (JSON.stringify(original.items) !== JSON.stringify(current.items)) {
     const itemChanges = getItemChanges(original.items, current.items);
-console.log("itemChanges --->", itemChanges)
+    console.log("itemChanges --->", itemChanges);
     itemChanges.forEach((c) => changes.push(c));
 
     // changes.push({
@@ -243,4 +263,28 @@ console.log("itemChanges --->", itemChanges)
   }
 
   return changes;
+};
+
+export const calculateBillTotals = (items: any, taxType: string) => {
+  let totalBeforeTax = 0;
+  let totalGST = 0;
+
+  items.forEach((item: any) => {
+    const amount = item.qty * item.rate;
+    totalBeforeTax += amount;
+  });
+  if (taxType === "NA" || taxType === "0") {
+    totalGST = 0;
+  } else if (taxType === "2.5") {
+    totalGST = totalBeforeTax * 0.05;
+  } else if (taxType === "9" || taxType === "18") {
+    totalGST = totalBeforeTax * 0.18;
+  }
+
+  return {
+    totalBeforeTax,
+    totalGST,
+    roundUp: Math.ceil(totalBeforeTax + totalGST) - (totalBeforeTax + totalGST),
+    totalAmount: Math.ceil(totalBeforeTax + totalGST),
+  };
 };

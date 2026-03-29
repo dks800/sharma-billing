@@ -11,7 +11,7 @@ import { PAYMENT_STATUSES, ROUTES } from "../../constants";
 import { BiPencil } from "react-icons/bi";
 import { FiTrash2 } from "react-icons/fi";
 import { auth } from "../../firebase";
-import { getFormChanges } from "./salesBillUtils";
+import { calculateBillTotals, getFormChanges } from "./salesBillUtils";
 
 export interface Item {
   description: string;
@@ -38,6 +38,10 @@ export default function EditSalesBillForm() {
   const [billDate, setBillDate] = useState<string>(
     bill?.billDate?.substring(0, 10) ||
       new Date().toISOString().substring(0, 10)
+  );
+  const [poNumber, setPoNumber] = useState<string>(bill?.poNumber || "");
+  const [poDate, setPoDate] = useState<string>(
+    bill?.poDate?.substring(0, 10) || new Date().toISOString().substring(0, 10)
   );
   const [paymentStatus, setPaymentStatus] = useState<
     "Paid" | "Pending" | "Partial"
@@ -118,35 +122,14 @@ export default function EditSalesBillForm() {
     setItems(updated);
   };
 
-  const calculateTotals = () => {
-    let totalBeforeTax = 0;
-    let totalGST = 0;
-
-    items.forEach((item) => {
-      const amount = item.qty * item.rate;
-      totalBeforeTax += amount;
-    });
-    if (taxType === "NA" || taxType === "0") {
-      totalGST = 0;
-    } else if (taxType === "2.5") {
-      totalGST = totalBeforeTax * 0.05;
-    } else if (taxType === "9" || taxType === "18") {
-      totalGST = totalBeforeTax * 0.18;
-    }
-
-    return {
-      totalBeforeTax,
-      totalGST,
-      totalAmount: totalBeforeTax + totalGST,
-    };
-  };
-
-  const totals = calculateTotals();
+  const totals = calculateBillTotals(items, taxType);
 
   const hasChanges =
     getFormChanges(
       bill,
       billNumber,
+      poNumber,
+      poDate,
       billDate,
       paymentStatus,
       ewayBillNo,
@@ -165,6 +148,8 @@ export default function EditSalesBillForm() {
     const changes = getFormChanges(
       bill,
       billNumber,
+      poNumber,
+      poDate,
       billDate,
       paymentStatus,
       ewayBillNo,
@@ -191,12 +176,14 @@ export default function EditSalesBillForm() {
           {changes.map((c, idx) => (
             <div key={idx} className="p-2 border rounded">
               <p className="font-medium">{c.field}</p>
-              <p className="text-sm bg-red-100 p-1 rounded">
-                Before: {String(c.before || "-")}
+              <div className="flex gap-2">
+              <p className="text-sm bg-red-100 p-1 rounded w-full flex gap-2">
+                Before: <p className="font-bold">{String(c.before || "-")}</p>
               </p>
-              <p className="text-sm bg-green-100 p-1 rounded">
-                After: {String(c.after || "-")}
+              <p className="text-sm bg-green-100 p-1 rounded w-full flex gap-2">
+                After: <p className="font-bold">{String(c.after || "-")}</p>
               </p>
+              </div>
             </div>
           ))}
         </div>
@@ -227,12 +214,14 @@ export default function EditSalesBillForm() {
     if (!selectedCustomer?.gstin) return alert("Customer is required!");
     if (!updateSalesBill) return alert("Hook not ready. Reload App!");
 
-    const totals = calculateTotals();
+    const totals = calculateBillTotals(items, taxType);
 
     setLoading(true);
     await updateSalesBill(bill.id, {
       billNumber,
       billDate,
+      poNumber,
+      poDate,
       financialYear: getFinancialYear(new Date(billDate)),
       customerGSTIN: selectedCustomer?.gstin,
       customerName: selectedCustomer?.name,
@@ -316,6 +305,24 @@ export default function EditSalesBillForm() {
             type="date"
             value={billDate}
             onChange={(e) => setBillDate(e.target.value)}
+            className="w-full border rounded p-2"
+          />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">PO Number</label>
+          <input
+            type="input"
+            value={poNumber}
+            onChange={(e) => setPoNumber(e.target.value)}
+            className="w-full border rounded p-2"
+          />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">PO Date</label>
+          <input
+            type="date"
+            value={poDate}
+            onChange={(e) => setPoDate(e.target.value)}
             className="w-full border rounded p-2"
           />
         </div>
@@ -628,6 +635,8 @@ export default function EditSalesBillForm() {
           <p>
             GST {getGstPercent()}: {formatCurrency(totals.totalGST.toFixed(2))}
           </p>
+          <p>Round Up: {formatCurrency(totals.roundUp.toFixed(2))}</p>
+
           <p className="font-bold">
             Total: {formatCurrency(totals.totalAmount.toFixed(2))}
           </p>

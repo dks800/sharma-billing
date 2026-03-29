@@ -21,6 +21,7 @@ interface Props {
 }
 
 const SingleBillPDF: React.FC<Props> = ({ bill }) => {
+  let srCounter = 1;
   const [selectedCompany, setSelectedCompany] = useState<Company>(
     {} as Company
   );
@@ -138,7 +139,7 @@ const SingleBillPDF: React.FC<Props> = ({ bill }) => {
                 style={styles.companyLogo}
               />
             </View>
-            <Text style={styles.centerText}>
+            <Text style={[styles.centerText, styles.brandLabel]}>
               Tax Invoice ({bill?.financialYear})
             </Text>
             <Text style={styles.leftText}>#{bill?.billNumber}</Text>
@@ -195,7 +196,7 @@ const SingleBillPDF: React.FC<Props> = ({ bill }) => {
                 )}
               </View>
               <View style={[styles.partyBox, { borderRightWidth: 0 }]}>
-                <Text style={styles.partyHeading}>Buyer (Bill To):</Text>
+                <Text style={styles.partyHeading}>Buyer (Bill/Ship To):</Text>
                 <Text
                   style={[styles?.brandLabel, { textTransform: "uppercase" }]}
                 >
@@ -232,6 +233,8 @@ const SingleBillPDF: React.FC<Props> = ({ bill }) => {
               {[
                 { label: "Invoice No:", value: bill?.billNumber },
                 { label: "Invoice Date:", value: formatDate(bill?.billDate) },
+                { label: "PO Number:", value: bill?.poNumber },
+                { label: "PO Date:", value: formatDate(bill?.poDate) },
                 { label: "From:", value: bill?.locationFrom },
                 { label: "To:", value: bill?.locationTo },
                 { label: "Payment:", value: bill?.paymentStatus },
@@ -283,41 +286,52 @@ const SingleBillPDF: React.FC<Props> = ({ bill }) => {
                 Amount
               </Text>
             </View>
-            {billData?.items?.map((c, idx) => (
-              <View
-                key={idx}
-                style={{
-                  ...styles.row,
-                  ...(idx === billData?.items?.length - 1
-                    ? { borderBottomWidth: 0.6 }
-                    : {}),
-                }}
-              >
-                <Text style={[styles.col, styles.colSr]}>
-                  {c?.rate ? idx + 1 : ""}
-                </Text>
-                <Text
-                  style={[
-                    styles.col,
-                    styles.colDescription,
-                    !c?.qty && !c?.rate ? styles?.italics : {},
-                  ]}
+            {billData?.items?.map((c, idx) => {
+              const isAmountValid = Number(c.qty) > 0 && Number(c.rate) > 0;
+              const isValid = isAmountValid && c?.hsnCode;
+              const isSpec = !isValid;
+              const sr = isValid ? srCounter++ : "";
+              const specCellStyle = isSpec ? styles.specCell : {};
+
+              return (
+                <View
+                  key={idx}
+                  style={{
+                    ...styles.row,
+                    ...(idx === billData?.items?.length - 1
+                      ? { borderBottomWidth: 0.6 }
+                      : {}),
+                  }}
                 >
-                  {c?.description}
-                </Text>
-                <Text style={[styles.col, styles.colHSN]}>{c?.hsnCode}</Text>
-                <Text style={[styles.col, styles.colQty]}>{c?.qty || ""}</Text>
-                <Text style={[styles.col, styles.colUnit]}>{c?.unit}</Text>
-                <Text style={[styles.col, styles.colRate]}>
-                  {c?.rate ? formatCurrency(c?.rate) : ""}
-                </Text>
-                <Text style={[styles.col, styles.colTotal]}>
-                  {c?.qty && c?.rate
-                    ? formatCurrency(Number(c?.qty) * Number(c?.rate))
-                    : ""}
-                </Text>
-              </View>
-            ))}
+                  <Text style={[styles.col, styles.colSr]}>
+                    {sr || "\u00A0"}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.col,
+                      styles.colDescription,
+                      specCellStyle,
+                      !c?.qty && !c?.rate ? styles?.italics : {},
+                    ]}
+                  >
+                    {c?.description}
+                  </Text>
+                  <Text style={[styles.col, styles.colHSN]}>{c?.hsnCode}</Text>
+                  <Text style={[styles.col, styles.colQty, specCellStyle]}>
+                    {c?.qty || ""}
+                  </Text>
+                  <Text style={[styles.col, styles.colUnit, specCellStyle]}>{c?.unit}</Text>
+                  <Text style={[styles.col, styles.colRate]}>
+                    {c?.rate ? formatCurrency(c?.rate) : ""}
+                  </Text>
+                  <Text style={[styles.col, styles.colTotal]}>
+                    {c?.qty && c?.rate
+                      ? formatCurrency(Number(c?.qty) * Number(c?.rate))
+                      : ""}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
 
           {/* Totals */}
@@ -445,7 +459,10 @@ const SingleBillPDF: React.FC<Props> = ({ bill }) => {
                   {selectedCompany?.name}
                 </Text>
               </Text>
-              <Image src={getCompanyStamp(bill?.companyId)} style={styles.logo} />
+              <Image
+                src={getCompanyStamp(bill?.companyId)}
+                style={styles.logo}
+              />
               <Text>Authorised Signatory</Text>
             </View>
           </View>
