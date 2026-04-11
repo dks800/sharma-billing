@@ -5,22 +5,33 @@ import {
   orderBy,
   limit,
   getDocs,
+  QueryConstraint,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { COLLECTIONS } from "../constants";
 
-export async function getNextBillNumber(companyId: string, identifier: string, collectionName: string) {
+export async function getNextBillNumber(
+  companyId: string,
+  identifier: string,
+  collectionName: string,
+) {
   const fy = getFinancialYear();
   const ref = collection(
     db,
-    `${COLLECTIONS.INVOICES}/${companyId}/${[collectionName]}`
+    `${COLLECTIONS.INVOICES}/${companyId}/${[collectionName]}`,
   );
-  const q = query(
-    ref,
-    where("financialYear", "==", fy),
+
+  const constraints: QueryConstraint[] = [
     orderBy(identifier, "desc"),
-    limit(1)
-  );
+    limit(1),
+  ];
+
+  if (collectionName !== COLLECTIONS.QUOTATIONS) {
+    constraints.unshift(where("financialYear", "==", fy));
+  }
+
+  const q = query(ref, ...constraints);
+
   const snapshot = await getDocs(q);
   if (!snapshot.empty) {
     const billNumber = snapshot.docs[0].data()?.[identifier];

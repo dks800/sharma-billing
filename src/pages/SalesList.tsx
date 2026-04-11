@@ -19,6 +19,11 @@ import SingleBillPDF from "../components/invoices/SingleBillPDF";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 import EmptyState from "../components/common/EmptyState";
 import SalesSummary from "../components/invoices/SalesSummary";
+import { getFinancialYear } from "../utils/billingHelper";
+import { Client } from "../components/customer/CustomerDropdown";
+import { useClients } from "../hooks/useClients";
+import { CgClose } from "react-icons/cg";
+import FiltersSection from "../components/invoices/FiltersSection";
 
 export default function SalesList() {
   const navigate = useNavigate();
@@ -32,10 +37,20 @@ export default function SalesList() {
     }
   }, [companyId, navigate]);
 
-  const [search, setSearch] = useState("");
   const [orderByField, setOrderByField] = useState("billNumber");
   const [orderDirection, setOrderDirection] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
+  const [customerList, setCustomerList] = useState<Client[]>([]);
+  const { data: allClients = [] } = useClients();
+  const [filters, setFilters] = useState({
+    financialYear: getFinancialYear(new Date()),
+    customer: "",
+    paymentStatus: "",
+    dateRange: {
+      start: null as Date | null,
+      end: null as Date | null,
+    },
+  });
   const rowsPerPage = 30;
   const {
     data: sales,
@@ -45,29 +60,32 @@ export default function SalesList() {
   } = useSalesBill(companyId || "", {
     orderByField,
     orderDirection,
+    financialYear: filters.financialYear || undefined,
+    where: [
+      ...(filters.customer ? [["customerGSTIN", "==", filters.customer]] : []),
+      ...(filters.paymentStatus
+        ? [["paymentStatus", "==", filters.paymentStatus]]
+        : []),
+    ],
+
+    dateRange:
+      filters.dateRange.start && filters.dateRange.end
+        ? filters.dateRange
+        : undefined,
   });
+
+  useEffect(() => {
+    const companyClients = allClients?.map(({ name, taxType, gstin }) => ({
+      name,
+      taxType,
+      gstin,
+    }));
+    setCustomerList(companyClients as any);
+  }, [allClients]);
 
   const [selectedBill, setSelectedBill] = useState<any | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
   const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
-
-  const filteredSales = useMemo(() => {
-    if (!sales || !sales?.length) return [];    
-    return sales.filter((bill: any) =>
-      [
-        bill.billNumber,
-        bill.customerName,
-        bill.customerPhone,
-        bill.totalAmount?.toString(),
-        bill.financialYear,
-        bill.items?.map((i: any) => i.name).join(" "),
-      ]
-        .filter(Boolean)
-        .some((field) =>
-          String(field)?.toLowerCase()?.includes(search?.toLowerCase()),
-        ),
-    );
-  }, [sales, search]);
 
   const handleSortChange = (field: string) => {
     if (orderByField === field) {
@@ -81,24 +99,16 @@ export default function SalesList() {
   const paginatedSales = useMemo(() => {
     const start = (currentPage - 1) * rowsPerPage;
 
-    const sortedSales = [...filteredSales].sort((a, b) => {
-      return Number(b.billNumber) - Number(a.billNumber); // DESC
+    const sortedSales = [...sales].sort((a, b) => {
+      if (a.financialYear > b.financialYear) return -1;
+      if (a.financialYear < b.financialYear) return 1;
+      return 0;
     });
 
     return sortedSales.slice(start, start + rowsPerPage);
-  }, [filteredSales, currentPage, rowsPerPage]);
+  }, [sales, currentPage, rowsPerPage]);
 
-  const totalPages = Math.ceil(filteredSales.length / rowsPerPage);
-
-  // Helper: Get FY from bill date
-  const getFinancialYear = (dateStr: string) => {
-    if (!dateStr) return "-";
-    const d = new Date(dateStr);
-    let year = d.getFullYear();
-    let fyStart = d.getMonth() + 1 <= 3 ? year - 1 : year;
-    let fyEnd = fyStart + 1;
-    return `${fyStart}-${fyEnd.toString().slice(-2)}`;
-  };
+  const totalPages = Math.ceil(sales.length / rowsPerPage);
 
   const getTaxType = () => {
     if (selectedBill?.taxType === "NA") return "(NA)";
@@ -132,10 +142,6 @@ export default function SalesList() {
     );
   };
 
-  useEffect(() => {
-    if (paginatedSales?.length) setSelectedBill(paginatedSales[0] || null);
-  }, [paginatedSales]);
-
   const renderSingleBillPrint = (bill: any) => {
     if (!bill) return null;
     return (
@@ -160,6 +166,68 @@ export default function SalesList() {
         }}
       </PDFDownloadLink>
     );
+  };
+
+  const removeFilter = (key: string) => {
+    setFilters((prev) => {
+      const updated = { ...prev };
+
+      if (key === "dateRange") {
+        updated.dateRange = { start: null, end: null };
+      } else {
+        (updated as any)[key] = "";
+      }
+
+      return updated;
+    });
+  };
+
+  const clearAllFilters = () => {
+    setFilters({
+      financialYear: "",
+      customer: "",
+      paymentStatus: "",
+      dateRange: { start: null, end: null },
+    });
+  };
+
+  const appliedFilters = [
+    filters.financialYear && {
+      key: "financialYear",
+      label: `FY: ${filters.financialYear}`,
+      color: "bg-blue-100 text-blue-700",
+    },
+
+    filters.customer && {
+      key: "customer",
+      label: `Customer: ${filters.customer}`,
+      color: "bg-purple-100 text-purple-700",
+    },
+
+    filters.paymentStatus && {
+      key: "paymentStatus",
+      label: `Status: ${filters.paymentStatus}`,
+      color: "bg-green-100 text-green-700",
+    },
+
+    filters.dateRange.start &&
+      filters.dateRange.end && {
+        key: "dateRange",
+        label: `${filters.dateRange.start.toLocaleDateString()} - ${filters.dateRange.end.toLocaleDateString()}`,
+        color: "bg-orange-100 text-orange-700",
+      },
+  ].filter(Boolean);
+
+  const getCardBorder = (paymentStatus: string) => {
+    const base = "border-l-4 border-r-4";
+
+    const statusMap: Record<string, string> = {
+      paid: "border-green-500",
+      pending: "border-red-500",
+      partial: "border-yellow-500",
+    };
+
+    return `${base} ${statusMap[paymentStatus] ?? ""}`;
   };
 
   return (
@@ -200,16 +268,43 @@ export default function SalesList() {
               </PDFDownloadLink>
             ) : null}
           </div>
-          <input
-            type="text"
-            placeholder="Search invoice, customer, amount, items..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="border rounded p-2 w-full sm:w-64"
-          />
+        </div>
+      </div>
+      <div className="flex flex-col gap-2">
+        <FiltersSection
+          customerList={customerList}
+          filters={filters}
+          setFilters={setFilters}
+        />
+        <div>
+          <p className="text-sm text-gray-500 m-2">
+            {appliedFilters.length} filters applied
+          </p>
+          {appliedFilters.length > 0 && (
+            <div className="bg-white p-4 rounded-2xl shadow mb-4 flex flex-wrap items-center gap-2">
+              {appliedFilters.map((filter: any) => (
+                <div
+                  key={filter.key}
+                  className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${filter.color} cursor-pointer`}
+                >
+                  <span>{filter.label}</span>
+
+                  <button
+                    onClick={() => removeFilter(filter.key)}
+                    className="hover:bg-black/10 rounded-full px-1"
+                  >
+                    <CgClose />
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={clearAllFilters}
+                className="ml-auto text-sm text-red-600 bg-red-100 hover:bg-red-200 px-3 py-1 rounded-xl transition"
+              >
+                Clear Filters
+              </button>
+            </div>
+          )}
         </div>
       </div>
       {loading ? (
@@ -226,7 +321,7 @@ export default function SalesList() {
         />
       ) : (
         <>
-          <SalesSummary sales={filteredSales} />
+          <SalesSummary sales={sales} />
           <div className="hidden sm:block overflow-x-auto bg-white rounded shadow">
             <table className="min-w-full border text-sm">
               <thead className="bg-gray-100">
@@ -256,10 +351,11 @@ export default function SalesList() {
                 </tr>
               </thead>
               <tbody>
-                {paginatedSales?.map((bill) => (
+                {paginatedSales?.map((bill, index) => (
                   <tr
                     key={bill.id}
-                    className="border-t hover:bg-gray-50 cursor-pointer"
+                    className={`hover:bg-gray-50 cursor-pointer
+                        ${index < paginatedSales.length - 1 && bill.financialYear !== paginatedSales?.[index + 1]?.financialYear ? "border-b border-black" : "border-t"}`}
                     onClick={(e) => {
                       if ((e?.currentTarget as any)?.type) return;
                       setShowDetailsModal(true);
@@ -268,7 +364,7 @@ export default function SalesList() {
                   >
                     <td className="px-4 py-2">{bill?.billNumber}</td>
                     <td className="px-4 py-2">
-                      {getFinancialYear(bill?.billDate)}
+                      {getFinancialYear(new Date(bill?.billDate))}
                     </td>
                     <td className="px-4 py-2">{formatDate(bill?.billDate)}</td>
                     <td
@@ -341,7 +437,7 @@ export default function SalesList() {
             {paginatedSales.map((bill) => (
               <div
                 key={bill.id}
-                className="bg-white rounded shadow p-3 cursor-pointer"
+                className={`bg-white rounded shadow p-3 cursor-pointer ${getCardBorder(bill?.paymentStatus?.toLowerCase() || "")}`}
                 onClick={() => {
                   setShowDetailsModal(true);
                   setSelectedBill(bill);
@@ -351,7 +447,7 @@ export default function SalesList() {
                   <span>{formatDate(bill.billDate)}</span>
                   <p>
                     <span className="text-sm text-gray-500">
-                      ({getFinancialYear(bill.billDate)})
+                      ({getFinancialYear(new Date(bill.billDate))})
                     </span>
                     &nbsp; Bill #
                     <span className="text-lg">{bill.billNumber}</span>
@@ -360,11 +456,11 @@ export default function SalesList() {
                 <div className="mt-1 text-gray-700">
                   <p>{bill.customerName}</p>
 
-                  <p className="font-bold mt-1 flex items-center gap-2">
+                  <p className="font-bold mt-1 flex items-center  justify-between gap-2">
                     {formatCurrency(bill.totalAmount)}
-                    <div className="mt-1">
+                    <span className="mt-1">
                       {renderPaymentStatus(bill.paymentStatus)}
-                    </div>
+                    </span>
                   </p>
                 </div>
               </div>
@@ -399,7 +495,7 @@ export default function SalesList() {
         <Modal
           title={`Bill #${
             selectedBill.billNumber
-          } - ${companyName} (${getFinancialYear(selectedBill.billDate)})`}
+          } - ${companyName} (${getFinancialYear(new Date(selectedBill.billDate))})`}
           type="info"
           isOpen={showDetailsModal && selectedBill}
           onClose={() => setSelectedBill(null)}

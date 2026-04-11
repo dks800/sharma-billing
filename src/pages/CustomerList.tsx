@@ -13,7 +13,7 @@ import { BsFillPlusCircleFill } from "react-icons/bs";
 
 export default function CustomerListPage() {
   const [search, setSearch] = useState("");
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(20);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<any | null>(null);
   const [sortField, setSortField] = useState("name");
@@ -129,14 +129,13 @@ export default function CustomerListPage() {
 
   return (
     <div className="p-2 space-y-4">
-      {/* Search + Add button */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
         <input
           type="text"
           placeholder="Search clients..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border p-2 rounded w-full sm:w-1/3"
+          className="border p-2 rounded w-full sm:w-1/3 rounded-xl"
         />
         <div className="flex items-center gap-2">
           <button
@@ -289,30 +288,34 @@ export default function CustomerListPage() {
               {paginatedClients.map((client) => (
                 <div
                   key={client.id}
-                  className="bg-white p-4 rounded-lg shadow border"
+                  className="bg-white p-4 rounded-lg shadow border flex gap-2 items-center justify-between"
                 >
-                  <div className="font-semibold text-lg">{client.name}</div>
-                  <p className="text-sm text-gray-600">
-                    GSTIN: {client.gstin || "-"}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Phone: {client.phone || "-"}
-                  </p>
-                  <div className="flex gap-4 mt-3 items-center justify-space-around">
+                  <div>
+                    <div className="font-semibold text-lg">{client.name}</div>
+                    <p className="text-sm text-gray-600">
+                      GSTIN: {client.gstin || "-"}
+                    </p>
+                    {client.phone && (
+                      <p className="text-sm text-gray-600">
+                        Phone: {client.phone}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2 mt-3 items-center justify-space-around">
                     <button
-                      className="text-blue-500 hover:underline flex items-center"
+                      className="text-blue-500 flex items-center bg-blue-100 p-2 rounded-xl"
                       onClick={() => {
                         setEditingClient(client);
                         setIsModalOpen(true);
                       }}
                     >
-                      <FiEdit2 className="mr-1" /> Edit
+                      <FiEdit2 className="mr-1" />
                     </button>
                     <button
-                      className="text-red-500 hover:underline flex items-center"
+                      className="text-red-500 flex items-center bg-red-100 p-2  rounded-xl"
                       onClick={() => setConfirmDelete(client)}
                     >
-                      <FiTrash2 className="mr-1" /> Delete
+                      <FiTrash2 className="mr-1" />
                     </button>
                   </div>
                 </div>

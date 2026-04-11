@@ -82,18 +82,6 @@ export default function CompanySelectorPage({
             Total Companies: {companies?.length || 0}
           </div>
 
-          {/* Search */}
-          <div className="relative mb-6">
-            <FiSearch className="absolute left-3 top-3 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search company..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-3 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-            />
-          </div>
-
           {/* Content */}
           <div className="max-h-96 overflow-y-auto space-y-3 pr-1">
             {loading ? (
@@ -124,6 +112,7 @@ export default function CompanySelectorPage({
                       <img
                         src={getCompanyLogo(company?.gstin)}
                         alt={company.name}
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                     </div>

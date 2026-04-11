@@ -48,14 +48,54 @@ export default function Layout() {
   };
 
   const navItems = [
-    { name: "Dashboard", icon: AiFillHome, path: ROUTES?.DASHBOARD },
-    { name: "Companies", icon: BsFillBriefcaseFill, path: ROUTES?.COMPANIES },
-    { name: "Customers", icon: BsFilePersonFill, path: ROUTES?.CUSTOMERS },
-    { name: "Sales Bills", icon: BsFillArrowUpRightCircleFill, path: ROUTES?.SELECTCOMPANYSALES },
-    { name: "Purchase Bills", icon: BsFillArrowDownRightCircleFill, path: ROUTES?.SELECTCOMPANYPURCHASE },
-    { name: "Quotations", icon: BsFileBarGraphFill, path: ROUTES?.SELECTCOMPANYQUOTE },
-    { name: "Proforma Invoice", icon: TbInvoice, path: ROUTES?.SELECTCOMPANYLETTERPADS },
-    { name: "Letter Pad", icon: BiEnvelopeOpen, path: ROUTES?.SELECTCOMPANYLETTERPADS },
+    {
+      name: "Dashboard",
+      icon: AiFillHome,
+      path: ROUTES?.DASHBOARD,
+      page: ROUTES?.DASHBOARD,
+    },
+    {
+      name: "Companies",
+      icon: BsFillBriefcaseFill,
+      path: ROUTES?.COMPANIES,
+      page: ROUTES?.COMPANIES,
+    },
+    {
+      name: "Customers",
+      icon: BsFilePersonFill,
+      path: ROUTES?.CUSTOMERS,
+      page: ROUTES?.CUSTOMERS,
+    },
+    {
+      name: "Sales Bills",
+      icon: BsFillArrowUpRightCircleFill,
+      path: ROUTES?.SELECTCOMPANYSALES,
+      page: ROUTES?.SALES,
+    },
+    {
+      name: "Purchase Bills",
+      icon: BsFillArrowDownRightCircleFill,
+      path: ROUTES?.SELECTCOMPANYPURCHASE,
+      page: ROUTES?.PURCHASE,
+    },
+    {
+      name: "Quotations",
+      icon: BsFileBarGraphFill,
+      path: ROUTES?.SELECTCOMPANYQUOTE,
+      page: ROUTES?.QUOTATIONS,
+    },
+    {
+      name: "Proforma Invoice",
+      icon: TbInvoice,
+      path: ROUTES?.SELECTCOMPANYLETTERPADS,
+      page: ROUTES?.LETTERPADS,
+    },
+    {
+      name: "Letter Pad",
+      icon: BiEnvelopeOpen,
+      path: ROUTES?.SELECTCOMPANYLETTERPADS,
+      page: ROUTES?.LETTERPADS,
+    },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -63,7 +103,10 @@ export default function Layout() {
   const getInitials = () => {
     const name = user?.displayName?.split(" ");
     if (!name) return "";
-    return name.map((n: string) => n[0]).join("").toUpperCase();
+    return name
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase();
   };
 
   return (
@@ -93,8 +136,6 @@ export default function Layout() {
             {sidebarOpen ? <FiChevronLeft /> : <FiChevronRight />}
           </button>
         </div>
-
-        {/* Navigation */}
         <nav className="flex-1 p-3 space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -106,7 +147,7 @@ export default function Layout() {
                 onClick={() => setMobileOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all text-sm font-medium
                 ${
-                  isActive(item.path)
+                  isActive(item.page)
                     ? "bg-indigo-600 text-white shadow-md"
                     : "text-gray-600 hover:bg-indigo-50"
                 }`}
@@ -136,15 +177,13 @@ export default function Layout() {
         {/* Topbar */}
         <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-md border-b shadow-sm px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button
-              className="md:hidden"
-              onClick={() => setMobileOpen(true)}
-            >
+            <button className="md:hidden" onClick={() => setMobileOpen(true)}>
               <FiMenu size={22} />
             </button>
 
             <h2 className="text-sm md:text-base font-semibold text-gray-700 capitalize">
-              {location.pathname.split("/").filter(Boolean).join(" / ") || "dashboard"}
+              {location.pathname.split("/").filter(Boolean).join(" / ") ||
+                "dashboard"}
             </h2>
           </div>
 

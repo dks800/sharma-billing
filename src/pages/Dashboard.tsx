@@ -26,14 +26,14 @@ const modules = [
     title: "Customers",
     icon: LuUsers,
     description: "Add, edit and manage customers",
-    color: "green",
+    color: "orange",
     navigate: ROUTES?.CUSTOMERS,
   },
   {
     title: "Sales Bills",
     icon: LuReceiptText,
     description: "Create and track sales invoices",
-    color: "orange",
+    color: "green",
     navigate: ROUTES?.SELECTCOMPANYSALES,
   },
   {

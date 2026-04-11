@@ -783,8 +783,6 @@ export default function AddQuotationForm() {
         )}
       </p>
 
-      {/* Footer Buttons */}
-      {/* <div className="flex flex-col sm:flex-row gap-3 justify-end"> */}
       <div className=" fixed bottom-0 left-0 right-0 z-30 bg-white border-t px-4 py-3 flex justify-around sm:justify-end gap-3 md:static md:mt-6 md:border-0 md:bg-transparent">
 
         <button

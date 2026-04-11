@@ -14,6 +14,7 @@ interface CustomerDropdownProps {
   onChange: (client: Client) => void;
   placeholder?: string;
   className?: string;
+  showGstin?: boolean;
 }
 
 const CustomerDropdown: React.FC<CustomerDropdownProps> = ({
@@ -22,6 +23,7 @@ const CustomerDropdown: React.FC<CustomerDropdownProps> = ({
   onChange,
   className,
   placeholder = "Select Customer",
+  showGstin = true,
 }) => {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
@@ -30,7 +32,7 @@ const CustomerDropdown: React.FC<CustomerDropdownProps> = ({
     .filter(
       (c) =>
         c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.gstin?.toLowerCase().includes(search.toLowerCase())
+        c.gstin?.toLowerCase().includes(search.toLowerCase()),
     )
     ?.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -41,9 +43,9 @@ const CustomerDropdown: React.FC<CustomerDropdownProps> = ({
         onClick={() => setOpen(!open)}
       >
         {value && Object?.keys(value)?.length ? (
-          <div className="text-sm text-gray-500">
-            <span className="font-medium text-black">{value.name}</span> (
-            {value.gstin || "No GSTIN"})
+          <div className="text-sm text-gray-500 flex flex-col">
+            <p className="font-medium text-black">{value.name}</p>
+            {showGstin ? (value.gstin) || "No GSTIN" : ""}
           </div>
         ) : (
           <span className="text-gray-400">{placeholder}</span>
@@ -55,10 +57,11 @@ const CustomerDropdown: React.FC<CustomerDropdownProps> = ({
           <div className="p-2">
             <input
               type="text"
+              autoFocus
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search name or GSTIN..."
-              className="w-full border rounded px-2 py-1"
+              className="w-full border px-2 py-1 rounded-xl"
             />
           </div>
 

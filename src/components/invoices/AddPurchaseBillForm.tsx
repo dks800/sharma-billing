@@ -18,7 +18,9 @@ const AddPurchaseBillForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const { addItem } = usePurchaseBill(companyId);
-  const { data: allClients = [] } = useClients();
+  const { data: allClients = [] } = useClients({
+    orderByField: "name",
+  });
 
   useEffect(() => {
     const companyClients = allClients.map(({ name, taxType, gstin }) => ({
@@ -46,7 +48,7 @@ const AddPurchaseBillForm: React.FC = () => {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -86,25 +88,29 @@ const AddPurchaseBillForm: React.FC = () => {
         onSubmit={handleSubmit}
         className="grid grid-cols-1 sm:grid-cols-2 gap-4"
       >
-        <div className="flex-1 w-full">
-          <label className="block mb-1 font-medium">Supplier Name *</label>
-          <CustomerDropdown
-            customers={customers}
-            value={formData.supplier}
-            onChange={(c) => {
-              handleChange({
-                target: {
-                  name: "supplier",
-                  value: c,
-                },
-              } as any);
-              setFormData((prev) => ({
-                ...prev,
-                supplierName: c?.name || "",
-                supplierGstin: c?.gstin || "",
-              }));
-            }}
-          />
+        <div className="flex gap-2 items-center">
+          <div className="w-full">
+            <label className="block mb-1 font-medium">
+              Supplier Name<span className="text-red-500">*</span>
+            </label>
+            <CustomerDropdown
+              customers={customers}
+              value={formData.supplier}
+              onChange={(c) => {
+                handleChange({
+                  target: {
+                    name: "supplier",
+                    value: c,
+                  },
+                } as any);
+                setFormData((prev) => ({
+                  ...prev,
+                  supplierName: c?.name || "",
+                  supplierGstin: c?.gstin || "",
+                }));
+              }}
+            />
+          </div>
           <button
             className="bg-blue-500 hover:bg-blue-800 text-white px-3 py-2 mt-2 rounded"
             onClick={() => navigate(ROUTES?.CUSTOMERS)}
@@ -115,7 +121,9 @@ const AddPurchaseBillForm: React.FC = () => {
           </button>
         </div>
         <div>
-          <label className="block mb-1 font-medium">Bill Number *</label>
+          <label className="block mb-1 font-medium">
+            Bill Number<span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
             name="billNumber"
@@ -128,7 +136,9 @@ const AddPurchaseBillForm: React.FC = () => {
         </div>
 
         <div>
-          <label className="block mb-1 font-medium">Bill Date *</label>
+          <label className="block mb-1 font-medium">
+            Bill Date<span className="text-red-500">*</span>
+          </label>
           <input
             type="date"
             name="billDate"
@@ -157,7 +167,9 @@ const AddPurchaseBillForm: React.FC = () => {
         </div>
 
         <div>
-          <label className="block mb-1 font-medium">Total Amount (₹) *</label>
+          <label className="block mb-1 font-medium">
+            Total Amount (₹)<span className="text-red-500">*</span>
+          </label>
           <input
             type="number"
             placeholder="Enter Total Amount"

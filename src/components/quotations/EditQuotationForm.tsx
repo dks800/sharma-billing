@@ -38,7 +38,7 @@ export default function EditQuotationForm() {
 
   const [customers, setCustomers] = useState<Client[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Client>(
-    {} as Client
+    {} as Client,
   );
 
   /* ---------------- AUTH ---------------- */
@@ -92,7 +92,7 @@ export default function EditQuotationForm() {
               [field]:
                 field === "qty" || field === "rate" ? Number(value) : value,
             }
-          : item
+          : item,
       );
 
       return { ...prev, items: updatedItems };
@@ -144,7 +144,6 @@ export default function EditQuotationForm() {
   };
 
   const totals = useMemo(calculateTotals, [formData]);
-
   /* ---------------- CHANGE DETECTION ---------------- */
   const isEdited = useMemo(() => {
     return JSON.stringify(formData) !== JSON.stringify(originalData);
@@ -157,6 +156,10 @@ export default function EditQuotationForm() {
     setLoading(true);
     await updateItem(quotation.id, {
       ...formData,
+      totalBeforeTax: totals.totalBeforeTax,
+      totalGST: totals.totalGST,
+      roundUp: totals.roundUp,
+      totalAmount: totals.totalAmount,
       customerName: selectedCustomer.name,
       customerGSTIN: selectedCustomer.gstin,
       updatedAt: new Date(),
@@ -271,7 +274,7 @@ export default function EditQuotationForm() {
               ...item,
               [field]: originalData.items[idx][field],
             }
-          : item
+          : item,
       );
 
       return { ...prev, items };
@@ -345,7 +348,7 @@ export default function EditQuotationForm() {
               value={formData.quoteNumber}
               onChange={(e) => handleInputChange("quoteNumber", e.target.value)}
               className={`w-full border rounded p-2 transition ${applyChangeItemClass(
-                "quoteNumber"
+                "quoteNumber",
               )}`}
             />
             {isInputChanged("quoteNumber")
@@ -361,7 +364,7 @@ export default function EditQuotationForm() {
               value={formData.quoteDate}
               onChange={(e) => handleInputChange("quoteDate", e.target.value)}
               className={`w-full border rounded p-2 transition ${applyChangeItemClass(
-                "quoteDate"
+                "quoteDate",
               )}`}
             />
             {isInputChanged("quoteDate")
@@ -376,7 +379,7 @@ export default function EditQuotationForm() {
               value={formData.taxType}
               onChange={(e) => handleInputChange("taxType", e.target.value)}
               className={`w-full border rounded p-2 transition ${applyChangeItemClass(
-                "taxType"
+                "taxType",
               )}`}
             >
               {TAX_TYPES.map((t) => (
@@ -400,7 +403,7 @@ export default function EditQuotationForm() {
                 handleInputChange(e?.target?.name, e?.target?.value)
               }
               className={`w-full border rounded p-2 transition ${applyChangeItemClass(
-                "currency"
+                "currency",
               )}`}
             >
               {globalCurrencies?.map((curr, idx) => (
@@ -426,7 +429,7 @@ export default function EditQuotationForm() {
                 handleInputChange(e.target?.name, e.target.value)
               }
               className={`w-full border rounded p-2 transition ${applyChangeItemClass(
-                "title"
+                "title",
               )}`}
             />
             {isInputChanged("title") ? renderResetInputButton("title") : null}
@@ -444,7 +447,7 @@ export default function EditQuotationForm() {
                 handleInputChange(e.target?.name, e.target.value)
               }
               className={`w-full border rounded p-2 transition ${applyChangeItemClass(
-                "subTitle"
+                "subTitle",
               )}`}
             />
             {isInputChanged("subTitle")
@@ -461,7 +464,7 @@ export default function EditQuotationForm() {
               value={formData.delivery}
               onChange={(e) => handleInputChange(e.target.name, e.target.value)}
               className={`w-full border rounded p-2 transition ${applyChangeItemClass(
-                "delivery"
+                "delivery",
               )}`}
               placeholder="Delivery terms"
             />
@@ -480,7 +483,7 @@ export default function EditQuotationForm() {
               value={formData.paymentTerms}
               onChange={(e) => handleInputChange(e.target.name, e.target.value)}
               className={`w-full border rounded p-2 transition ${applyChangeItemClass(
-                "paymentTerms"
+                "paymentTerms",
               )}`}
               placeholder="Payment terms"
             />
@@ -499,7 +502,7 @@ export default function EditQuotationForm() {
               value={formData.freight}
               onChange={(e) => handleInputChange(e.target.name, e.target.value)}
               className={`w-full border rounded p-2 transition ${applyChangeItemClass(
-                "freight"
+                "freight",
               )}`}
               placeholder="Freight details"
             />
@@ -518,7 +521,7 @@ export default function EditQuotationForm() {
               value={formData.validity}
               onChange={(e) => handleInputChange(e.target.name, e.target.value)}
               className={`w-full border rounded p-2 transition ${applyChangeItemClass(
-                "validity"
+                "validity",
               )}`}
               placeholder="Validity period"
             />
@@ -557,7 +560,7 @@ export default function EditQuotationForm() {
                 handleInputChange("customerName", c.name);
               }}
               className={`w-full border rounded p-2 transition ${applyChangeItemClass(
-                "customerGSTIN"
+                "customerGSTIN",
               )}`}
             />
             {isInputChanged("customerGSTIN")
@@ -599,7 +602,7 @@ export default function EditQuotationForm() {
                         }
                         className={`w-full border rounded p-1 transition ${getItemInputClass(
                           idx,
-                          "description"
+                          "description",
                         )}`}
                       />
                       {isItemFieldChanged(idx, "description")
@@ -617,7 +620,7 @@ export default function EditQuotationForm() {
                         }
                         className={`w-full border rounded p-1 transition ${getItemInputClass(
                           idx,
-                          "hsnCode"
+                          "hsnCode",
                         )}`}
                       />
                       {isItemFieldChanged(idx, "hsnCode")
@@ -635,7 +638,7 @@ export default function EditQuotationForm() {
                         }
                         className={`w-full border rounded p-1 transition ${getItemInputClass(
                           idx,
-                          "qty"
+                          "qty",
                         )}`}
                       />
                       {isItemFieldChanged(idx, "qty")
@@ -653,7 +656,7 @@ export default function EditQuotationForm() {
                         }
                         className={`w-full border rounded p-1 transition ${getItemInputClass(
                           idx,
-                          "unit"
+                          "unit",
                         )}`}
                       />
                       {isItemFieldChanged(idx, "unit")
@@ -671,7 +674,7 @@ export default function EditQuotationForm() {
                         }
                         className={`w-full border rounded p-1 transition ${getItemInputClass(
                           idx,
-                          "rate"
+                          "rate",
                         )}`}
                       />
                       {isItemFieldChanged(idx, "rate")
@@ -727,7 +730,7 @@ export default function EditQuotationForm() {
                   }
                   className={`w-full border rounded p-2 mb-2 transition ${getItemInputClass(
                     idx,
-                    "description"
+                    "description",
                   )}`}
                 />
                 {isItemFieldChanged(idx, "description")
@@ -744,7 +747,7 @@ export default function EditQuotationForm() {
                   }
                   className={`w-full border rounded p-2 mb-2 transition ${getItemInputClass(
                     idx,
-                    "hsnCode"
+                    "hsnCode",
                   )}`}
                 />
                 {isItemFieldChanged(idx, "hsnCode")
@@ -762,7 +765,7 @@ export default function EditQuotationForm() {
                     }
                     className={`w-full border rounded p-2 mb-2 transition ${getItemInputClass(
                       idx,
-                      "qty"
+                      "qty",
                     )}`}
                   />
                   {isItemFieldChanged(idx, "qty")
@@ -779,7 +782,7 @@ export default function EditQuotationForm() {
                     }
                     className={`w-full border rounded p-2 mb-2 transition ${getItemInputClass(
                       idx,
-                      "unit"
+                      "unit",
                     )}`}
                   />
                   {isItemFieldChanged(idx, "unit")
@@ -797,7 +800,7 @@ export default function EditQuotationForm() {
                   }
                   className={`w-full border rounded p-2 mb-2 transition ${getItemInputClass(
                     idx,
-                    "rate"
+                    "rate",
                   )}`}
                 />
                 {isItemFieldChanged(idx, "rate")

@@ -128,6 +128,7 @@ const AddCustomerForm = ({ initialData, onSave }: AddCustomerFormProps) => {
         value={formData.address}
         onChange={handleChange}
         required
+        rows={4}
         className="border p-2 w-full rounded"
       />
       <button

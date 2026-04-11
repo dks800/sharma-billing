@@ -79,7 +79,9 @@ export default function AddSalesBillForm() {
     {} as Client
   );
 
-  const { data: allClients = [] } = useClients();
+  const { data: allClients = [] } = useClients({
+    orderByField: "name",
+  });
 
   useEffect(() => {
     const companyClients = allClients.map(({ name, taxType, gstin, city }) => ({

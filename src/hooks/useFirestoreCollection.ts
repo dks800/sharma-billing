@@ -13,6 +13,7 @@ import {
   QueryConstraint,
   DocumentData,
   QueryDocumentSnapshot,
+  where,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { toast } from "react-toastify";
@@ -23,8 +24,8 @@ export interface QueryOptions {
   orderDirection?: "asc" | "desc";
   startAfterDoc?: QueryDocumentSnapshot<DocumentData> | null;
   financialYear?: string;
-  companyId?: string;
   dateRange?: { start: Date; end: Date };
+  where?: [string, any, any][];
 }
 
 export function useFirestoreCollection(
@@ -38,12 +39,31 @@ export function useFirestoreCollection(
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
 
   useEffect(() => {
+    if (!collectionName) return;
+
     setLoading(true);
     setError(null);
 
     const colRef = collection(db, collectionName);
-
     const constraints: QueryConstraint[] = [];
+    if (options.where && Array.isArray(options.where)) {
+      options.where.forEach(([field, operator, value]) => {
+        constraints.push(where(field, operator, value));
+      });
+    }
+
+    if (options.financialYear) {
+      constraints.push(
+        where("financialYear", "==", options.financialYear)
+      );
+    }
+
+    if (options.dateRange?.start && options.dateRange?.end) {
+      constraints.push(
+        where("billDate", ">=", options.dateRange.start),
+        where("billDate", "<=", options.dateRange.end)
+      );
+    }
 
     if (options.orderByField) {
       constraints.push(
@@ -71,11 +91,11 @@ export function useFirestoreCollection(
 
         setData(docsData);
 
-        if (snapshot.docs.length > 0) {
-          setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
-        } else {
-          setLastDoc(null);
-        }
+        setLastDoc(
+          snapshot.docs.length > 0
+            ? snapshot.docs[snapshot.docs.length - 1]
+            : null
+        );
 
         setLoading(false);
       },
@@ -92,6 +112,10 @@ export function useFirestoreCollection(
     options.orderByField,
     options.orderDirection,
     options.startAfterDoc,
+    options.financialYear,
+    options.dateRange?.start,
+    options.dateRange?.end,
+    JSON.stringify(options.where),
   ]);
 
   const addItem = async (item: any) => {

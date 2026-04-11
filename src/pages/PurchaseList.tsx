@@ -3,22 +3,17 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { usePurchaseBill } from "../hooks/useInvoices";
 import { toast } from "react-toastify";
 import { formatCurrency, formatDate } from "../utils/commonUtils";
-import { PAYMENT_STATUSES, ROUTES } from "../constants";
+import { ROUTES } from "../constants";
 import Modal from "../components/common/Modal";
-import {
-  FiEdit,
-  FiEye,
-  FiEyeOff,
-  FiTrash2,
-} from "react-icons/fi";
+import { FiEdit, FiTrash2 } from "react-icons/fi";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 import renderPaymentStatus from "../components/invoices/getPaymentStatus";
 import { useClients } from "../hooks/useClients";
-import CustomerDropdown, {
-  Client,
-} from "../components/customer/CustomerDropdown";
+import { Client } from "../components/customer/CustomerDropdown";
 import Loader from "../components/Loader";
 import EmptyState from "../components/common/EmptyState";
+import FiltersSection from "../components/invoices/FiltersSection";
+import { CgClose } from "react-icons/cg";
 
 interface PurchaseBill {
   id: string;
@@ -39,18 +34,20 @@ const PurchaseList = () => {
   const companyId = location.state?.companyId;
   const companyName = location.state?.companyName;
   const [loading, setLoading] = useState(false);
-  const [orderByField, setOrderByField] = useState("billNumber");
+  const [orderByField, setOrderByField] = useState("billDate");
   const [orderDirection, setOrderDirection] = useState<"asc" | "desc">("desc");
   const [selectedBill, setSelectedBill] = useState<PurchaseBill | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSupplier, setSelectedSupplier] = useState({} as Client);
-  const [selectedStatus, setSelectedStatus] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
-  const [customers, setCustomers] = useState<Client[]>([]);
+  const [customerList, setCustomerList] = useState<Client[]>([]);
   const { data: allClients = [] } = useClients();
+  const [filters, setFilters] = useState({
+    customer: "",
+    paymentStatus: "",
+    dateRange: {
+      start: null as Date | null,
+      end: null as Date | null,
+    },
+  });
 
   useEffect(() => {
     const companyClients = allClients.map(({ name, taxType, gstin }) => ({
@@ -58,7 +55,7 @@ const PurchaseList = () => {
       taxType,
       gstin,
     }));
-    setCustomers(companyClients as any);
+    setCustomerList(companyClients as any);
   }, [allClients]);
 
   const {
@@ -68,51 +65,17 @@ const PurchaseList = () => {
   } = usePurchaseBill(companyId || "", {
     orderByField,
     orderDirection,
+    where: [
+      ...(filters.customer ? [["supplierGstin", "==", filters.customer]] : []),
+      ...(filters.paymentStatus
+        ? [["paymentStatus", "==", filters.paymentStatus]]
+        : []),
+    ],
+    dateRange:
+      filters.dateRange.start && filters.dateRange.end
+        ? filters.dateRange
+        : undefined,
   });
-
-  const filteredBills = React.useMemo(() => {
-    let list =
-      purchaseBills?.sort((a, b) => (a.billDate < b.billDate ? 1 : -1)) || [];
-
-    if (searchQuery) {
-      list = list.filter((b) =>
-        [
-          b.billNumber,
-          b.supplierName,
-          b.supplierGstin,
-          b.totalAmount.toString(),
-        ].some((field) =>
-          field?.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      );
-    }
-
-    if (selectedSupplier?.gstin)
-      list = list.filter((b) => b.supplierGstin === selectedSupplier?.gstin);
-    if (selectedStatus)
-      list = list.filter((b) => b.paymentStatus === selectedStatus);
-    if (fromDate)
-      list = list.filter((b) => new Date(b.billDate) >= new Date(fromDate));
-    if (toDate)
-      list = list.filter((b) => new Date(b.billDate) <= new Date(toDate));
-
-    return list;
-  }, [
-    purchaseBills,
-    selectedSupplier?.gstin,
-    selectedStatus,
-    fromDate,
-    toDate,
-    searchQuery,
-  ]);
-
-  const handleClearFilters = () => {
-    setSelectedSupplier({} as Client);
-    setSelectedStatus("");
-    setFromDate("");
-    setToDate("");
-    setSearchQuery("");
-  };
 
   const handleDelete = async () => {
     if (!selectedBill) return toast.warning("No selected Purchase bill!");
@@ -137,69 +100,40 @@ const PurchaseList = () => {
     setSelectedBill(null);
   };
 
-  const renderAdditionalFilters = () => (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-        <CustomerDropdown
-          customers={customers}
-          value={selectedSupplier}
-          onChange={(c) => setSelectedSupplier(c)}
-        />
-        <select
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2 text-sm w-full sm:w-40"
-        >
-          <option value="">All Status</option>
-          {PAYMENT_STATUSES?.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-        <input
-          type="date"
-          value={fromDate}
-          onChange={(e) => setFromDate(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2 text-sm w-full sm:w-36"
-        />
-        <input
-          type="date"
-          value={toDate}
-          onChange={(e) => setToDate(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2 text-sm w-full sm:w-36"
-        />
-        <input
-          type="text"
-          placeholder="Search by supplier or bill no."
-          className="border p-2 rounded w-full sm:w-64 mt-2 sm:mt-0"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
-      <div className="flex gap-2 w-full sm:w-auto">
-        <button
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 flex items-center justify-center gap-2 w-[48%] sm:w-auto"
-          onClick={handleClearFilters}
-        >
-          Clear Filters
-        </button>
-      </div>
-    </div>
-  );
+  const appliedFilters = [
+    filters.customer && {
+      key: "customer",
+      label: `Supplier: ${filters.customer}`,
+      color: "bg-purple-100 text-purple-700",
+    },
+
+    filters.paymentStatus && {
+      key: "paymentStatus",
+      label: `Status: ${filters.paymentStatus}`,
+      color: "bg-green-100 text-green-700",
+    },
+
+    filters.dateRange.start &&
+      filters.dateRange.end && {
+        key: "dateRange",
+        label: `${filters.dateRange.start.toLocaleDateString()} - ${filters.dateRange.end.toLocaleDateString()}`,
+        color: "bg-orange-100 text-orange-700",
+      },
+  ].filter(Boolean);
+
   const renderBillAggregates = () => {
-    const amount = filteredBills.reduce(
+    const amount = purchaseBills.reduce(
       (a, { totalAmount }) => a + Number(totalAmount),
-      0
+      0,
     );
     return (
-      <div className="mt-4 flex justify-center w-full px-4 pb-4">
-        <div className="flex gap-2 bg-gray-50 border rounded px-4 w-full max-w-md justify-between">
+      <div className="flex justify-center w-full">
+        <div className="flex gap-2 bg-sky-100 border rounded px-4 w-full max-w-md justify-between p-2 rounded-xl my-4">
           <div className="text-right">
             <p className="text-sm text-gray-600">
               Total Bills:{" "}
               <span className="text-lg font-semibold text-blue-600">
-                {filteredBills?.length}
+                {purchaseBills?.length}
               </span>
             </p>
           </div>
@@ -215,6 +149,29 @@ const PurchaseList = () => {
       </div>
     );
   };
+
+  const removeFilter = (key: string) => {
+    setFilters((prev) => {
+      const updated = { ...prev };
+
+      if (key === "dateRange") {
+        updated.dateRange = { start: null, end: null };
+      } else {
+        (updated as any)[key] = "";
+      }
+
+      return updated;
+    });
+  };
+
+  const clearAllFilters = () => {
+    setFilters({
+      customer: "",
+      paymentStatus: "",
+      dateRange: { start: null, end: null },
+    });
+  };
+
   return (
     <div className="p-4">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-3">
@@ -223,11 +180,11 @@ const PurchaseList = () => {
         </h2>
         <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 w-full sm:w-auto">
           <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-end">
-            {/* {!loading && filteredBills?.length ? (
+            {/* {!loading && purchaseBills?.length ? (
               <PDFDownloadLink
                 document={
                   <PurchaseListPDF
-                    billList={filteredBills}
+                    billList={purchaseBills}
                     companyName={companyName}
                   />
                 }
@@ -259,30 +216,53 @@ const PurchaseList = () => {
             >
               <BsFillPlusCircleFill /> Purchase Bill
             </button>
-
-            <button
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center justify-center gap-2 w-[48%] sm:w-auto"
-              onClick={() => setShowFilters((prev) => !prev)}
-            >
-              {!showFilters ? <FiEye /> : <FiEyeOff />} Filters
-            </button>
           </div>
         </div>
       </div>
-      <div
-        className={`${
-          !showFilters ? "hidden" : ""
-        } transition-all duration-300`}
-      >
-        <p>
-          <b>Filters:</b>
-        </p>
-        {renderAdditionalFilters()}
+      <div className="flex flex-col gap-2">
+        <FiltersSection
+          showFyear={false}
+          customerList={customerList}
+          filters={filters}
+          setFilters={setFilters}
+        />
+        <div>
+          {appliedFilters.length ? (
+            <p className="text-sm text-gray-500 m-2">
+              {appliedFilters.length} filters applied
+            </p>
+          ) : null}
+          {appliedFilters.length > 0 && (
+            <div className="bg-white p-4 rounded-2xl shadow mb-4 flex flex-wrap items-center gap-2">
+              {appliedFilters.map((filter: any) => (
+                <div
+                  key={filter.key}
+                  className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${filter.color} cursor-pointer`}
+                >
+                  <span>{filter.label}</span>
+
+                  <button
+                    onClick={() => removeFilter(filter.key)}
+                    className="hover:bg-black/10 rounded-full px-1"
+                  >
+                    <CgClose />
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={clearAllFilters}
+                className="ml-auto text-sm text-red-600 bg-red-100 hover:bg-red-200 px-3 py-1 rounded-xl transition"
+              >
+                Clear Filters
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {loadingBills ? (
         <Loader />
-      ) : filteredBills.length === 0 ? (
+      ) : purchaseBills.length === 0 ? (
         <EmptyState
           title="No Purchase Bills found"
           ctaLabel={"+ Purchase Bill"}
@@ -299,7 +279,7 @@ const PurchaseList = () => {
                 {[
                   { label: "Sr", field: "SrNo" },
                   { label: "Bill No", field: "billNumber" },
-                  { label: "Date", field: "date" },
+                  { label: "Date", field: "billDate" },
                   { label: "Supplier", field: "SupplierName" },
                   { label: "Total", field: "totalAmount" },
                   { label: "Payment Status", field: "paymentStatus" },
@@ -318,7 +298,7 @@ const PurchaseList = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredBills.map((bill, index) => (
+              {purchaseBills.map((bill, index) => (
                 <tr
                   key={bill.id}
                   className="border-t hover:bg-gray-50 cursor-pointer"
@@ -366,13 +346,14 @@ const PurchaseList = () => {
               ))}
             </tbody>
           </table>
-          {filteredBills?.length > 10 ? renderBillAggregates() : null}
+          {purchaseBills?.length > 10 ? renderBillAggregates() : null}
         </div>
       )}
 
       {/* Mobile cards */}
       <div className="sm:hidden space-y-3">
-        {filteredBills.map((bill) => (
+        {renderBillAggregates()}
+        {purchaseBills.map((bill) => (
           <div
             key={bill.id}
             className="bg-white rounded shadow p-3 cursor-pointer"
@@ -381,21 +362,19 @@ const PurchaseList = () => {
             }}
           >
             <div className="flex justify-between text-sm font-semibold">
-              <span>Bill #{bill.billNumber}</span>
               <span>{formatDate(bill.billDate)}</span>
+              <span>Bill #{bill.billNumber}</span>
+              <span className="font-bold">
+                {formatCurrency(bill.totalAmount)}
+              </span>
             </div>
-            <div className="mt-1 text-gray-700">
-              <p>
-                {bill?.supplierName}{" "}
-                <span style={{ fontSize: 12 }}>({bill.supplierGstin})</span>
-              </p>
-              <p className="font-bold mt-1">
-                {formatCurrency(bill.totalAmount)} -{" "}
-                {renderPaymentStatus(bill.paymentStatus)}
-              </p>
+            <div className="mt-1 text-gray-700 flex gap-2 justify-between">
+              <span>{bill?.supplierName}</span>
+              <span>{renderPaymentStatus(bill.paymentStatus)}</span>
             </div>
           </div>
         ))}
+        {purchaseBills?.length > 10 ? renderBillAggregates() : null}
       </div>
 
       {/* Bill Details Modal */}
@@ -447,7 +426,8 @@ const PurchaseList = () => {
             <p className="pb-1">
               <b>Sub Total:</b>{" "}
               {formatCurrency(
-                Number(selectedBill.totalAmount) - Number(selectedBill.totalGST)
+                Number(selectedBill.totalAmount) -
+                  Number(selectedBill.totalGST),
               )}
             </p>
             <p className="pb-1">

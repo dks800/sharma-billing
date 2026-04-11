@@ -17,7 +17,9 @@ const EditPurchaseBillForm: React.FC = () => {
   const companyName = location.state?.companyName;
 
   const { updateItem } = usePurchaseBill(companyId);
-  const { data: allClients = [] } = useClients();
+  const { data: allClients = [] } = useClients({
+    orderByField: "name",
+  });
 
   const [customers, setCustomers] = useState<Client[]>([]);
 

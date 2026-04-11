@@ -91,7 +91,7 @@ export function numberToWords(num: number, currency = "Rupees"): string {
 
 export function formatCurrency(
   amount: string | number,
-  showCurrency = false
+  showCurrency = false,
 ): string {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
 
@@ -158,3 +158,17 @@ export const getCompanyStamp = (companyId: string) => {
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export const getFinancialYearsList = () => {
+  const years = [];
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth();
+  let startYear = currentMonth >= 3 ? currentYear : currentYear - 1;
+
+  for (let y = startYear; y >= 2021; y--) {
+    years.push(`${y}-${y + 1}`);
+  }
+
+  return years;
+};
