@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useCompanies } from "../../hooks/useCompanies";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Loader from "../Loader";
 import { ROUTES } from "../../constants";
-import { FiSearch, FiX } from "react-icons/fi";
+import { FiX } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { getCompanyLogo } from "../../utils/commonUtils";
 
@@ -14,7 +14,6 @@ export default function CompanySelectorPage({
 }) {
   const navigate = useNavigate();
   const { data: companies, loading, error } = useCompanies();
-  const [search, setSearch] = useState("");
 
   const handleSelect = (gstin: string, name: string) => {
     navigate(`/${redirectTo}`, {
@@ -34,18 +33,6 @@ export default function CompanySelectorPage({
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
-
-  const filteredCompanies = companies?.filter((company: any) =>
-    company.name.toLowerCase().includes(search.toLowerCase()),
-  );
-
-  // const getInitials = (name: string) => {
-  //   return name
-  //     ?.split(" ")
-  //     .map((n) => n[0])
-  //     .join("")
-  //     .toUpperCase();
-  // };
 
   return (
     <AnimatePresence>
@@ -92,13 +79,13 @@ export default function CompanySelectorPage({
               <div className="text-center text-red-500 py-6">
                 Error loading companies
               </div>
-            ) : filteredCompanies?.length === 0 ? (
+            ) : companies?.length === 0 ? (
               <div className="text-center text-gray-400 py-6">
                 No companies found
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {filteredCompanies.map((company: any) => (
+                {companies.map((company: any) => (
                   <div
                     title={company.name}
                     key={company.id}
