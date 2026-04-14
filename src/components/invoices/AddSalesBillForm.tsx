@@ -40,7 +40,7 @@ export default function AddSalesBillForm() {
   const companyName = location.state?.companyName || "Select a Parent Company";
 
   const { addItem: addSalesBill, data: existingBills } = useSalesBill(
-    companyId || ""
+    companyId || "",
   );
 
   const [billNumber, setBillNumber] = useState<number>(0);
@@ -62,7 +62,7 @@ export default function AddSalesBillForm() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [loadingBillNumber, setLoadingBillNumber] = useState(false);
   const [billDate, setBillDate] = useState<string>(
-    new Date().toISOString().substring(0, 10)
+    new Date().toISOString().substring(0, 10),
   );
   const [paymentStatus, setPaymentStatus] = useState<
     "Paid" | "Pending" | "Partially Paid"
@@ -76,7 +76,7 @@ export default function AddSalesBillForm() {
   const [taxType, setTaxType] = useState<string>("0");
   const [customers, setCustomers] = useState<Client[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Client>(
-    {} as Client
+    {} as Client,
   );
 
   const { data: allClients = [] } = useClients({
@@ -160,7 +160,11 @@ export default function AddSalesBillForm() {
       });
       navigate(ROUTES?.SALES, { state: { companyId, companyName } });
     } catch (error) {
-      toast.error(error instanceof Error ? error?.message : "Error saving sales bill. Please try again.");
+      toast.error(
+        error instanceof Error
+          ? error?.message
+          : "Error saving sales bill. Please try again.",
+      );
       console.error("Error saving sales bill:", error);
     } finally {
       setLoading(false);
@@ -175,7 +179,9 @@ export default function AddSalesBillForm() {
     if (!addSalesBill) errorMsg = "Hook not ready. Reload App!";
     const totals = calculateBillTotals(items, taxType);
     const duplicateBill = existingBills.find(
-      (b: any) => b.billNumber === billNumber
+      (b: any) =>
+        b.billNumber === billNumber &&
+        getFinancialYear(new Date(billDate)) === b.financialYear,
     );
     if (duplicateBill) errorMsg = "Invoice number already exists!";
     errorMsg =
@@ -193,7 +199,7 @@ export default function AddSalesBillForm() {
     const duplicateClientAmount = existingBills.find(
       (b: any) =>
         b.customerName === selectedCustomer?.name &&
-        b.totalAmount === totals.totalAmount
+        b.totalAmount === totals.totalAmount,
     );
     if (duplicateClientAmount) {
       setShowConfirm(true);
@@ -698,7 +704,7 @@ export default function AddSalesBillForm() {
         (In words):{" "}
         {numberToWords(
           Math.round(Number(totals.totalAmount.toFixed(2))),
-          currency
+          currency,
         )}
       </p>
 
