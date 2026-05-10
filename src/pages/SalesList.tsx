@@ -36,7 +36,7 @@ export default function SalesList() {
       navigate(ROUTES?.SELECTCOMPANYSALES);
     }
   }, [companyId, navigate]);
-
+  const [showModal, setShowModal] = useState(false);
   const [orderByField, setOrderByField] = useState("billNumber");
   const [orderDirection, setOrderDirection] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -118,8 +118,10 @@ export default function SalesList() {
     return `(${selectedBill?.taxType})%`;
   };
 
-  const handleConfirmDelete = () => {
-    deleteItem(selectedBill.id);
+  const handleConfirmDelete = async () => {
+    await deleteItem(selectedBill.id);
+    setConfirmDelete(false);
+    setSelectedBill(null);
   };
 
   const getDeleteFooter = () => {
@@ -127,7 +129,10 @@ export default function SalesList() {
       <div className="grid grid-cols-2 sm:flex justify-center gap-3 mt-4">
         <button
           className="w-full sm:w-auto px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
-          onClick={() => setConfirmDelete(false)}
+          onClick={() => {
+            setConfirmDelete(false);
+            if (selectedBill) setShowDetailsModal(true);
+          }}
         >
           Close
         </button>
@@ -359,6 +364,7 @@ export default function SalesList() {
                     onClick={(e) => {
                       if ((e?.currentTarget as any)?.type) return;
                       setShowDetailsModal(true);
+                      setShowModal(true);
                       setSelectedBill(bill);
                     }}
                   >
@@ -491,14 +497,18 @@ export default function SalesList() {
       )}
 
       {/* Modal (shared for desktop + mobile) */}
-      {showDetailsModal && selectedBill && (
+      {showModal && showDetailsModal && selectedBill && (
         <Modal
           title={`Bill #${
             selectedBill.billNumber
           } - ${companyName} (${getFinancialYear(new Date(selectedBill.billDate))})`}
           type="info"
           isOpen={showDetailsModal && selectedBill}
-          onClose={() => setSelectedBill(null)}
+          onClose={() => {
+            setSelectedBill(null);
+            setShowDetailsModal(false);
+            setShowModal(false);
+          }}
           footer={
             <div className="flex justify-between w-full">
               <div className="flex gap-2">
@@ -515,7 +525,10 @@ export default function SalesList() {
                 </button>
                 <button
                   className="px-4 py-2 rounded border border-red-500 text-red-600 hover:bg-red-50"
-                  onClick={() => setConfirmDelete(true)}
+                  onClick={() => {
+                    setConfirmDelete(true);
+                    setShowDetailsModal(false);
+                  }}
                 >
                   Delete
                 </button>
@@ -525,7 +538,11 @@ export default function SalesList() {
               <div>
                 <button
                   className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700"
-                  onClick={() => setSelectedBill(null)}
+                  onClick={() => {
+                    setSelectedBill(null);
+                    setShowDetailsModal(false);
+                    setShowModal(false);
+                  }}
                 >
                   Close
                 </button>
@@ -677,14 +694,14 @@ export default function SalesList() {
         </Modal>
       )}
 
-      {confirmDelete && (
+      {confirmDelete ? (
         <DeleteSalesBillModal
           isOpen={confirmDelete}
           footerContent={getDeleteFooter()}
           selectedBill={selectedBill}
           setConfirmDelete={setConfirmDelete}
         />
-      )}
+      ) : null}
     </div>
   );
 }

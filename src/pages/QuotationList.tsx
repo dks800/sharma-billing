@@ -71,8 +71,8 @@ export default function QuotationList() {
       ]
         .filter(Boolean)
         .some((field) =>
-          String(field)?.toLowerCase()?.includes(search?.toLowerCase())
-        )
+          String(field)?.toLowerCase()?.includes(search?.toLowerCase()),
+        ),
     );
   }, [quotationList, search]);
 
@@ -118,16 +118,6 @@ export default function QuotationList() {
     }
     return `(${selectedBill?.taxType})%`;
   };
-
-  // const handleConfirmDelete = async () => {
-  //   if (!selectedBill?.id) return;
-  //   await deleteItem(selectedBill.id);
-  //   setConfirmDelete(false);
-  //   setShowDetailsModal(false);
-  //   setTimeout(() => {
-  //     setSelectedBill(null);
-  //   }, 500);
-  // };
 
   const handleConfirmDelete = async () => {
     if (!selectedBill?.id) return;
@@ -222,12 +212,14 @@ export default function QuotationList() {
       items,
     };
   };
-
   const preparedPrintData = useMemo(() => {
     if (!printBill || !company || !client) return null;
 
     return {
-      billData: prepareBillForPrint(printBill, 23),
+      billData: prepareBillForPrint(
+        printBill,
+        printBill?.items?.length > 10 ? 23 : 10,
+      ),
       selectedCompany: company,
       selectedClient: client,
     };
@@ -250,11 +242,6 @@ export default function QuotationList() {
 
   return (
     <div className="p-4">
-      {/* {quotationList?.length && (
-        <PDFViewer style={{ width: "100%", height: "90vh" }}>
-          <QuotationListPDF list={printableQuotationList} />
-        </PDFViewer>
-      )} */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
         <h1 className="text-xl font-bold">Quotations - {companyName}</h1>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -680,14 +667,14 @@ export default function QuotationList() {
         </Modal>
       )}
 
-      {confirmDelete && (
+      {confirmDelete ? (
         <DeleteSalesBillModal
           isOpen={confirmDelete}
           footerContent={getDeleteFooter()}
           selectedBill={selectedBill ? mapBillData(selectedBill) : null}
           setConfirmDelete={setConfirmDelete}
         />
-      )}
+      ) : null}
     </div>
   );
 }

@@ -42,7 +42,10 @@ const PageOneSQ = ({
         <View style={styles.header}>
           <View style={styles.topRow}>
             <View style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <Image src={getCompanyLogo(selectedCompany?.gstin)} style={styles.logo} />
+              <Image
+                src={getCompanyLogo(selectedCompany?.gstin)}
+                style={styles.logo}
+              />
               <Text style={styles.companyName}>{selectedCompany?.name}</Text>
             </View>
             <Text style={styles.contactText}>{selectedCompany?.address}</Text>
@@ -170,7 +173,9 @@ const PageOneSQ = ({
               {selectedCompany?.manufacturerDetails || ""}
             </Text>
             <Text style={[styles?.bold, styles?.brandColor]}>Other Firms:</Text>
-            <Text>{selectedCompany?.otherFirms || ""}</Text>
+            <Text style={{ fontSize: 8 }}>
+              {selectedCompany?.otherFirms || ""}
+            </Text>
           </View>
           {renderFooterImageSection}
         </View>

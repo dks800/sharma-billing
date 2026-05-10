@@ -252,7 +252,6 @@ export const getQuotationChanges = (original: any, current: any): Change[] => {
   // Items (important)
   if (JSON.stringify(original.items) !== JSON.stringify(current.items)) {
     const itemChanges = getItemChanges(original.items, current.items);
-    console.log("itemChanges --->", itemChanges);
     itemChanges.forEach((c) => changes.push(c));
 
     // changes.push({

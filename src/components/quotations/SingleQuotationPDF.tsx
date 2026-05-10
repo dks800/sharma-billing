@@ -9,6 +9,7 @@ import PageTwoSQ from "./PageTwoSQ";
 import PageThreeSQ from "./PageThreeSQ";
 import PageFourSQ from "./PageFourSQ";
 import { getCompanyWatermark } from "../../utils/commonUtils";
+import SinglePageQuotation from "./SinglePageQuotation";
 
 interface Props {
   data: any;
@@ -30,10 +31,10 @@ const SingleQuotationPDF: React.FC<Props> = ({ data, calculateGst = true }) => {
     billData?.companyId === "24BFYPS0683D1Z1"
       ? "#D62B26" // dev
       : billData?.companyId === "24AWKPS0186R1ZQ"
-      ? "#0033CC" // hqt
-      : billData?.companyId === "24HXBPS0898M1ZP"
-      ? "#597515" // ssb
-      : "#000000"; // default black
+        ? "#0033CC" // hqt
+        : billData?.companyId === "24HXBPS0898M1ZP"
+          ? "#597515" // ssb
+          : "#000000"; // default black
 
   // ✅ PDF Styles
   const styles = StyleSheet.create({
@@ -139,9 +140,10 @@ const SingleQuotationPDF: React.FC<Props> = ({ data, calculateGst = true }) => {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      fontSize: 10,
+      fontSize: 8,
       textAlign: "center",
       marginTop: 15,
+      lineHeight: 1.2,
     },
     page1Footer: {
       position: "absolute",
@@ -151,7 +153,7 @@ const SingleQuotationPDF: React.FC<Props> = ({ data, calculateGst = true }) => {
       paddingVertical: 6,
       paddingHorizontal: 15,
       flexDirection: "column",
-      justifyContent: "space-between",
+      justifyContent: "center",
       alignItems: "center",
     },
     footerImageSection: {
@@ -159,11 +161,11 @@ const SingleQuotationPDF: React.FC<Props> = ({ data, calculateGst = true }) => {
       justifyContent: "space-evenly",
       alignItems: "center",
       width: "100%",
-      marginTop: 4,
+      marginTop: 2,
     },
     footerImage: {
-      width: 35,
-      height: 35,
+      width: 25,
+      height: 25,
       objectFit: "contain",
     },
     table: {
@@ -273,23 +275,38 @@ const SingleQuotationPDF: React.FC<Props> = ({ data, calculateGst = true }) => {
 
   return (
     <Document>
-      <PageOneSQ
-        styles={styles}
-        bill={billData}
-        selectedCompany={selectedCompany}
-        selectedClient={selectedClient}
-        renderCompanyWatermark={companyWatermarkNode}
-        renderFooterImageSection={footerImageSectionNode}
-      />
-      <PageTwoSQ
-        styles={styles}
-        bill={billData}
-        calculateGst={calculateGst}
-        selectedCompany={selectedCompany}
-        renderCompanyWatermark={companyWatermarkNode}
-        renderFooterImageSection={footerImageSectionNode}
-        renderQuotationNumberPageHeader={quotationNumberPageHeaderNode}
-      />
+      {billData?.items?.length > 10 ? (
+        <>
+          <PageOneSQ
+            styles={styles}
+            bill={billData}
+            selectedCompany={selectedCompany}
+            selectedClient={selectedClient}
+            renderCompanyWatermark={companyWatermarkNode}
+            renderFooterImageSection={footerImageSectionNode}
+          />
+          <PageTwoSQ
+            styles={styles}
+            bill={billData}
+            calculateGst={calculateGst}
+            selectedCompany={selectedCompany}
+            renderCompanyWatermark={companyWatermarkNode}
+            renderFooterImageSection={footerImageSectionNode}
+            renderQuotationNumberPageHeader={quotationNumberPageHeaderNode}
+          />
+        </>
+      ) : (
+        <SinglePageQuotation
+          styles={styles}
+          bill={billData}
+          selectedCompany={selectedCompany}
+          selectedClient={selectedClient}
+          calculateGst={calculateGst}
+          renderCompanyWatermark={companyWatermarkNode}
+          renderFooterImageSection={footerImageSectionNode}
+        />
+      )}
+
       <PageThreeSQ
         bill={billData}
         styles={styles}

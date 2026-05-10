@@ -25,7 +25,6 @@ const PageThreeSQ = ({
   };
 
   const getBankImage = (bankName?: string) => {
-    console.log("bankName --->>", bankName)
     const _bankName = bankName?.toLocaleLowerCase() || "";
     const name = _bankName?.includes("hdfc")
       ? "hdfc"
