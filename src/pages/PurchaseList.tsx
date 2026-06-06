@@ -172,6 +172,8 @@ const PurchaseList = () => {
     });
   };
 
+// Todo - check date range selector, upon month navigation date picker closes and even selected end date is not applied correctly. Also, add option to select financial year as filter criteria.
+
   return (
     <div className="p-4">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-3">

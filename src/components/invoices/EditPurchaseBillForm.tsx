@@ -85,7 +85,7 @@ const EditPurchaseBillForm: React.FC = () => {
         ...formData,
         updatedAt: new Date(),
       });
-      toast.success("✅ Purchase bill updated successfully!");
+      toast.success("Purchase bill updated successfully!");
       navigate(ROUTES?.PURCHASE, { state: { companyId, companyName } });
     } catch (error) {
       console.error("Error updating purchase bill:", error);

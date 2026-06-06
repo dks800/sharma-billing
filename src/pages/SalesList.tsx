@@ -447,6 +447,7 @@ export default function SalesList() {
                 onClick={() => {
                   setShowDetailsModal(true);
                   setSelectedBill(bill);
+                  setShowModal(true);
                 }}
               >
                 <div className="flex justify-between text-sm font-semibold">

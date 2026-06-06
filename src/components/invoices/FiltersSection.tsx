@@ -20,6 +20,22 @@ const FiltersSection = ({
 
   const FiltersContent = () => (
     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <CustomerDropdown
+        showGstin={false}
+        customers={customerList}
+        className="border rounded-xl px-3 py-2"
+        value={
+          filters.customer
+            ? customerList.find((c) => c.gstin === filters.customer) || null
+            : null
+        }
+        onChange={(cust) =>
+          setFilters((prev: any) => ({
+            ...prev,
+            customer: cust.gstin || "",
+          }))
+        }
+      />
       {showFyear && (
         <select
           className="border rounded-xl px-3 py-2"
@@ -57,23 +73,6 @@ const FiltersSection = ({
           </option>
         ))}
       </select>
-
-      <CustomerDropdown
-        showGstin={false}
-        customers={customerList}
-        className="border rounded-xl px-3 py-2"
-        value={
-          filters.customer
-            ? customerList.find((c) => c.gstin === filters.customer) || null
-            : null
-        }
-        onChange={(cust) =>
-          setFilters((prev: any) => ({
-            ...prev,
-            customer: cust.gstin || "",
-          }))
-        }
-      />
 
       <input
         type="date"

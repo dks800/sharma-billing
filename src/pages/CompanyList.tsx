@@ -159,7 +159,7 @@ export default function CompanyList() {
                   className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 flex items-center gap-2"
                   onClick={() => {
                     if (!loading) {
-                      toast.success("✅ PDF download started!");
+                      toast.success("PDF download started!");
                     }
                   }}
                 >
