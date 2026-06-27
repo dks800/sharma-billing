@@ -5,54 +5,24 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   build: {
+    chunkSizeWarningLimit: 1600,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (!id.includes("node_modules")) return;
 
-          if (id.includes("node_modules/@react-pdf/pdfkit")) {
-            return "pdfkit";
-          }
-
           if (
-            id.includes("node_modules/@react-pdf/font") ||
+            id.includes("node_modules/@react-pdf") ||
+            id.includes("node_modules/yoga-layout") ||
+            id.includes("node_modules/pdfkit") ||
             id.includes("node_modules/fontkit") ||
             id.includes("node_modules/brotli") ||
             id.includes("node_modules/unicode-") ||
             id.includes("node_modules/linebreak") ||
-            id.includes("node_modules/hyphen")
-          ) {
-            return "pdf-fonts";
-          }
-
-          if (id.includes("node_modules/@react-pdf/layout")) {
-            return "pdf-layout";
-          }
-
-          if (
-            id.includes("node_modules/@react-pdf/textkit") ||
-            id.includes("node_modules/yoga-layout")
-          ) {
-            return "pdf-textkit";
-          }
-
-          if (
-            id.includes("node_modules/@react-pdf/image") ||
-            id.includes("node_modules/@react-pdf/png-js")
-          ) {
-            return "pdf-images";
-          }
-
-          if (
-            id.includes("node_modules/@react-pdf/render") ||
-            id.includes("node_modules/@react-pdf/reconciler") ||
-            id.includes("node_modules/@react-pdf/renderer")
+            id.includes("node_modules/hyphen") ||
+            id.includes("node_modules/png-js")
           ) {
             return "react-pdf";
-          }
-
-          if (id.includes("node_modules/@react-pdf")) {
-            return "pdf-core";
           }
 
           if (
