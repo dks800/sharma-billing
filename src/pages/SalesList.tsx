@@ -51,7 +51,7 @@ export default function SalesList() {
       end: null as Date | null,
     },
   });
-  const rowsPerPage = 30;
+  const rowsPerPage = 50;
   const {
     data: sales,
     loading,

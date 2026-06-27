@@ -39,7 +39,7 @@ export default function QuotationList() {
   const [orderByField, setOrderByField] = useState("quoteNumber");
   const [orderDirection, setOrderDirection] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 30;
+  const rowsPerPage = 100;
   const {
     data: quotationList,
     loading,

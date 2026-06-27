@@ -38,7 +38,7 @@ export default function LetterpadList() {
 
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 10;
+  const rowsPerPage = 50;
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedLetter, setSelectedLetter] = useState<any | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
