@@ -11,6 +11,14 @@ import HQTStamp from "../images/HQTStamp.png";
 import DevStamp from "../images/DevStamp.png";
 import SSBStamp from "../images/SSBStamp.png";
 import SLEStamp from "../images/SLEStamp.png";
+import PdfHQTLogo from "../images/pdf-optimized/hqt-logo.jpg";
+import PdfDevLogo from "../images/pdf-optimized/dev-logo.jpg";
+import PdfSLELogo from "../images/pdf-optimized/sle-logo.jpg";
+import PdfSSBLogo from "../images/pdf-optimized/ssb-logo.jpg";
+import PdfHQTWatermark from "../images/pdf-optimized/hqt-watermark.jpg";
+import PdfDevWatermark from "../images/pdf-optimized/dev-watermark.jpg";
+import PdfSLEWatermark from "../images/pdf-optimized/sle-watermark.jpg";
+import PdfSSBWatermark from "../images/pdf-optimized/ssb-watermark.jpg";
 
 
 export function numberToWords(num: number, currency = "Rupees"): string {
@@ -142,6 +150,26 @@ export const getCompanyWatermark = (companyId: string) => {
     "24GHHPS2424G1ZC": SLEWatermark,
   };
   return watermarkMap[companyId || ""] || "";
+};
+
+export const getCompanyPdfLogo = (companyId: string) => {
+  const logoMap: Record<string, string> = {
+    "24AWKPS0186R1ZQ": PdfHQTLogo,
+    "24BFYPS0683D1Z1": PdfDevLogo,
+    "24HXBPS0898M1ZP": PdfSSBLogo,
+    "24GHHPS2424G1ZC": PdfSLELogo,
+  };
+  return logoMap[companyId || ""] || getCompanyLogo(companyId);
+};
+
+export const getCompanyPdfWatermark = (companyId: string) => {
+  const watermarkMap: Record<string, string> = {
+    "24AWKPS0186R1ZQ": PdfHQTWatermark,
+    "24BFYPS0683D1Z1": PdfDevWatermark,
+    "24HXBPS0898M1ZP": PdfSSBWatermark,
+    "24GHHPS2424G1ZC": PdfSLEWatermark,
+  };
+  return watermarkMap[companyId || ""] || getCompanyWatermark(companyId);
 };
 
 export const getCompanyStamp = (companyId: string) => {

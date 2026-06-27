@@ -1,6 +1,6 @@
 import { Image, Page, Text, View } from "@react-pdf/renderer";
-import HDFCLogo from "../../images/hdfclogo.png";
-import iciciLogo from "../../images/icicilogo.png";
+import HDFCLogo from "../../images/pdf-optimized/hdfc-logo.jpg";
+import iciciLogo from "../../images/pdf-optimized/icici-logo.jpg";
 
 import { Company, Quotation, SalesBill } from "../../types/bills";
 

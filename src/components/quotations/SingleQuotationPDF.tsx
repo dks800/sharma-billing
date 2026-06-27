@@ -1,14 +1,14 @@
 import React from "react";
 import { Text, View, Document, Image, StyleSheet } from "@react-pdf/renderer";
-import anb from "../../images/anb.png";
-import min from "../../images/min.png";
-import sb from "../../images/sb.png";
-import sj from "../../images/sj.png";
+import anb from "../../images/pdf-optimized/anb-footer.jpg";
+import min from "../../images/pdf-optimized/min-footer.jpg";
+import sb from "../../images/pdf-optimized/sb-footer.jpg";
+import sj from "../../images/pdf-optimized/sj-footer.jpg";
 import PageOneSQ from "./PageOneSQ";
 import PageTwoSQ from "./PageTwoSQ";
 import PageThreeSQ from "./PageThreeSQ";
 import PageFourSQ from "./PageFourSQ";
-import { getCompanyWatermark } from "../../utils/commonUtils";
+import { getCompanyPdfWatermark } from "../../utils/commonUtils";
 import SinglePageQuotation from "./SinglePageQuotation";
 
 interface Props {
@@ -241,7 +241,7 @@ const SingleQuotationPDF: React.FC<Props> = ({ data, calculateGst = true }) => {
 
   const companyWatermarkNode = (
     <Image
-      src={getCompanyWatermark(billData?.companyId || "")}
+      src={getCompanyPdfWatermark(billData?.companyId || "")}
       style={{
         position: "absolute",
         top: "35%",

@@ -1,5 +1,5 @@
 import { Image, Link, Page, Text, View } from "@react-pdf/renderer";
-import { formatDate, getCompanyLogo } from "../../utils/commonUtils";
+import { formatDate, getCompanyPdfLogo } from "../../utils/commonUtils";
 import { Client, Company, Quotation, SalesBill } from "../../types/bills";
 
 type TypePageOneSQ = {
@@ -43,7 +43,7 @@ const PageOneSQ = ({
           <View style={styles.topRow}>
             <View style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <Image
-                src={getCompanyLogo(selectedCompany?.gstin)}
+                src={getCompanyPdfLogo(selectedCompany?.gstin)}
                 style={styles.logo}
               />
               <Text style={styles.companyName}>{selectedCompany?.name}</Text>

@@ -1,5 +1,5 @@
 import { Page, Text, View, Image, Link } from "@react-pdf/renderer";
-import { formatDate, getCompanyLogo } from "../../utils/commonUtils";
+import { formatDate, getCompanyPdfLogo } from "../../utils/commonUtils";
 import ProductTable from "./ProductTable";
 import OrderConditions from "./OrderConditions";
 
@@ -69,7 +69,7 @@ const SinglePageQuotation = ({
           </View>
           <View>
             <Image
-              src={getCompanyLogo(selectedCompany?.gstin)}
+              src={getCompanyPdfLogo(selectedCompany?.gstin)}
               style={styles.logo}
             />
           </View>
