@@ -332,7 +332,9 @@ export default function QuotationList() {
                       setSelectedBill(bill);
                     }}
                   >
-                    <td className="px-4 py-1 w-[80px] text-sm">{bill?.quoteNumber}</td>
+                    <td className="px-4 py-1 w-[80px] text-sm">
+                      {bill?.quoteNumber}
+                    </td>
                     <td className="px-2 py-1 w-[120px] text-sm">
                       {formatDate(bill?.quoteDate)}
                     </td>

@@ -28,6 +28,36 @@ interface PurchaseBill {
   [key: string]: any;
 }
 
+const PURCHASE_FILTERS_KEY = "purchaseListFilters";
+
+const defaultFilters = {
+  customer: "",
+  paymentStatus: "",
+  dateRange: {
+    start: null as Date | null,
+    end: null as Date | null,
+  },
+};
+
+const getSavedPurchaseFilters = () => {
+  try {
+    const raw = localStorage.getItem(PURCHASE_FILTERS_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    return {
+      customer: parsed.customer || "",
+      paymentStatus: parsed.paymentStatus || "",
+      dateRange: {
+        start: parsed.dateRange?.start ? new Date(parsed.dateRange.start) : null,
+        end: parsed.dateRange?.end ? new Date(parsed.dateRange.end) : null,
+      },
+    };
+  } catch {
+    return null;
+  }
+};
+
 const PurchaseList = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -40,14 +70,30 @@ const PurchaseList = () => {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [customerList, setCustomerList] = useState<Client[]>([]);
   const { data: allClients = [] } = useClients();
-  const [filters, setFilters] = useState({
-    customer: "",
-    paymentStatus: "",
-    dateRange: {
-      start: null as Date | null,
-      end: null as Date | null,
-    },
-  });
+  const [filters, setFilters] = useState(() => getSavedPurchaseFilters() || defaultFilters);
+
+  useEffect(() => {
+    const filtersToStore = {
+      customer: filters.customer,
+      paymentStatus: filters.paymentStatus,
+      dateRange: {
+        start: filters.dateRange.start ? filters.dateRange.start.toISOString() : null,
+        end: filters.dateRange.end ? filters.dateRange.end.toISOString() : null,
+      },
+    };
+
+    const hasAnyFilter =
+      !!filters.customer ||
+      !!filters.paymentStatus ||
+      !!filters.dateRange.start ||
+      !!filters.dateRange.end;
+
+    if (hasAnyFilter) {
+      localStorage.setItem(PURCHASE_FILTERS_KEY, JSON.stringify(filtersToStore));
+    } else {
+      localStorage.removeItem(PURCHASE_FILTERS_KEY);
+    }
+  }, [filters]);
 
   useEffect(() => {
     const companyClients = allClients.map(({ name, taxType, gstin }) => ({
@@ -170,6 +216,7 @@ const PurchaseList = () => {
       paymentStatus: "",
       dateRange: { start: null, end: null },
     });
+    localStorage.removeItem(PURCHASE_FILTERS_KEY);
   };
 
 // Todo - check date range selector, upon month navigation date picker closes and even selected end date is not applied correctly. Also, add option to select financial year as filter criteria.
