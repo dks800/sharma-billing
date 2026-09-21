@@ -12,6 +12,7 @@ import DevStamp from "../images/DevStamp.png";
 import SSBStamp from "../images/SSBStamp.png";
 import SLEStamp from "../images/SLEStamp.png";
 import PdfHQTLogo from "../images/pdf-optimized/hqt-logo.jpg";
+import PdfHQTLogoExp from "../images/pdf-optimized/hqt-logo-exp.png";
 import PdfDevLogo from "../images/pdf-optimized/dev-logo.jpg";
 import PdfSLELogo from "../images/pdf-optimized/sle-logo.jpg";
 import PdfSSBLogo from "../images/pdf-optimized/ssb-logo.jpg";
@@ -19,7 +20,6 @@ import PdfHQTWatermark from "../images/pdf-optimized/hqt-watermark.jpg";
 import PdfDevWatermark from "../images/pdf-optimized/dev-watermark.jpg";
 import PdfSLEWatermark from "../images/pdf-optimized/sle-watermark.jpg";
 import PdfSSBWatermark from "../images/pdf-optimized/ssb-watermark.jpg";
-
 
 export function numberToWords(num: number, currency = "Rupees"): string {
   if (num === 0) return `Zero ${currency} Only`;
@@ -152,9 +152,9 @@ export const getCompanyWatermark = (companyId: string) => {
   return watermarkMap[companyId || ""] || "";
 };
 
-export const getCompanyPdfLogo = (companyId: string) => {
+export const getCompanyPdfLogo = (companyId: string, singlePage = false) => {
   const logoMap: Record<string, string> = {
-    "24AWKPS0186R1ZQ": PdfHQTLogo,
+    "24AWKPS0186R1ZQ": singlePage ? PdfHQTLogoExp : PdfHQTLogo,
     "24BFYPS0683D1Z1": PdfDevLogo,
     "24HXBPS0898M1ZP": PdfSSBLogo,
     "24GHHPS2424G1ZC": PdfSLELogo,
@@ -182,7 +182,6 @@ export const getCompanyStamp = (companyId: string) => {
   return companyMap[companyId || ""] || "";
 };
 
-
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -200,3 +199,26 @@ export const getFinancialYearsList = () => {
 
   return years;
 };
+
+export const generateFinancialYears = (
+  startYear = 2020,
+  yearsAhead = 10,
+): string[] => {
+  const currentYear = new Date().getFullYear();
+  const endYear = currentYear + yearsAhead;
+
+  const years: string[] = [];
+
+  for (let year = startYear; year <= endYear; year++) {
+    years.push(`${String(year).slice(-2)}-${String(year + 1).slice(-2)}`);
+  }
+
+  return years.reverse();
+};
+
+export const createSalaryRow = () => ({
+  id: crypto.randomUUID(),
+  financialYear: "",
+  monthlySalary: 0,
+  effectiveFrom: "",
+});

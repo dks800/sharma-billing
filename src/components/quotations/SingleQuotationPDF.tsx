@@ -68,6 +68,9 @@ const SingleQuotationPDF: React.FC<Props> = ({ data, calculateGst = true }) => {
     logo: {
       width: 60,
     },
+    twinLogo: {
+      width: 120,
+    },
     companyName: {
       fontSize: 20,
       color: brandColor,
@@ -112,8 +115,15 @@ const SingleQuotationPDF: React.FC<Props> = ({ data, calculateGst = true }) => {
       flexDirection: "column",
       gap: 4,
       textAlign: "center",
-      marginTop: 100,
+      marginTop: 20,
       marginBottom: 100,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    expLogo: {
+      height: 90,
+      width: 90,
+      marginBottom: 20,
     },
     quotationFor: {
       fontSize: 14,

@@ -1,6 +1,7 @@
 import { Image, Link, Page, Text, View } from "@react-pdf/renderer";
 import { formatDate, getCompanyPdfLogo } from "../../utils/commonUtils";
 import { Client, Company, Quotation, SalesBill } from "../../types/bills";
+import expLogo from "../../images/pdf-optimized/exp.png";
 
 type TypePageOneSQ = {
   styles: any;
@@ -140,6 +141,7 @@ const PageOneSQ = ({
 
         {/* Quotation Title */}
         <View style={styles.titleSection}>
+          <Image src={expLogo} style={styles?.expLogo} />
           <Text style={[styles.quotationFor, styles?.brandColor]}>
             QUOTATION FOR
           </Text>

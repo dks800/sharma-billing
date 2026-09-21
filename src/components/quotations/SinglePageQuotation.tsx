@@ -69,8 +69,8 @@ const SinglePageQuotation = ({
           </View>
           <View>
             <Image
-              src={getCompanyPdfLogo(selectedCompany?.gstin)}
-              style={styles.logo}
+              src={getCompanyPdfLogo(selectedCompany?.gstin, true)}
+              style={styles.twinLogo}
             />
           </View>
         </View>
